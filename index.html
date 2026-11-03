@@ -1,1 +1,1990 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNC Stepper Music Editor</title>
+<script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0e14;
+  --bg2: #111820;
+  --bg3: #1a2230;
+  --border: #2a3444;
+  --text: #c5cdd8;
+  --text2: #7a8694;
+  --accent-x: #ff6b4a;
+  --accent-y: #4aff8b;
+  --accent-z: #4a9eff;
+  --accent: #ff9f43;
+  --danger: #ff4757;
+  --success: #2ed573;
+}
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent-x), var(--accent-y), var(--accent-z));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.logo-text span {
+  color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg3);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:hover { background: #243040; border-color: #3a4a5a; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn-primary:hover { background: #ffb347; }
+
+.btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn-danger:hover { background: rgba(255,71,87,0.1); }
+
+.btn-success {
+  background: var(--success);
+  color: #000;
+  border-color: var(--success);
+  font-weight: 600;
+}
+.btn-success:hover { background: #7bed9f; }
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Main Layout */
+.main {
+  display: grid;
+  grid-template-columns: 300px 1fr 320px;
+  grid-template-rows: 1fr auto;
+  height: calc(100vh - 61px);
+}
+
+/* Left Panel */
+.left-panel {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-section {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Upload Area */
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.upload-area:hover {
+  border-color: var(--accent);
+  background: rgba(255,159,67,0.05);
+}
+
+.upload-area.dragover {
+  border-color: var(--accent);
+  background: rgba(255,159,67,0.1);
+}
+
+.upload-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.upload-text {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.upload-text strong {
+  color: var(--accent);
+}
+
+/* File Info */
+.file-info {
+  display: none;
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.file-info.visible { display: block; }
+
+.file-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 3px 0;
+}
+
+.file-info-row .label { color: var(--text2); }
+.file-info-row .value { color: var(--text); font-weight: 500; }
+
+/* Settings */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.setting-row label {
+  color: var(--text2);
+}
+
+.setting-row input[type="number"],
+.setting-row select {
+  width: 90px;
+  padding: 4px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 11px;
+  text-align: right;
+}
+
+.setting-row input[type="range"] {
+  width: 90px;
+  accent-color: var(--accent);
+}
+
+/* Axis indicators */
+.axis-card {
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--bg);
+  margin-bottom: 8px;
+  border-left: 3px solid;
+}
+
+.axis-card.x { border-left-color: var(--accent-x); }
+.axis-card.y { border-left-color: var(--accent-y); }
+.axis-card.z { border-left-color: var(--accent-z); }
+
+.axis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.axis-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.axis-card.x .axis-name { color: var(--accent-x); }
+.axis-card.y .axis-name { color: var(--accent-y); }
+.axis-card.z .axis-name { color: var(--accent-z); }
+
+.axis-note {
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.axis-bar {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.axis-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.1s;
+  width: 0%;
+}
+
+.axis-card.x .axis-bar-fill { background: var(--accent-x); }
+.axis-card.y .axis-bar-fill { background: var(--accent-y); }
+.axis-card.z .axis-bar-fill { background: var(--accent-z); }
+
+/* Center - Visualization */
+.center-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.viz-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.viz-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.viz-overlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.viz-badge {
+  padding: 4px 10px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px;
+  backdrop-filter: blur(8px);
+}
+
+.transport-bar {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.transport-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.transport-btn:hover { background: #243040; }
+.transport-btn.play-btn { background: var(--success); color: #000; border-color: var(--success); }
+.transport-btn.play-btn:hover { background: #7bed9f; }
+.transport-btn.stop-btn { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+.time-display {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 100px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-x), var(--accent-y), var(--accent-z));
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.volume-control input {
+  width: 60px;
+  accent-color: var(--accent);
+}
+
+/* Right Panel */
+.right-panel {
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Note List */
+.note-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.note-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  transition: background 0.2s;
+}
+
+.note-item:hover { background: var(--bg); }
+
+.note-item.active { background: rgba(255,159,67,0.15); }
+
+.note-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.note-dot.x { background: var(--accent-x); }
+.note-dot.y { background: var(--accent-y); }
+.note-dot.z { background: var(--accent-z); }
+
+.note-name { font-weight: 500; min-width: 35px; }
+.note-freq { color: var(--text2); min-width: 55px; }
+.note-time { color: var(--text2); margin-left: auto; }
+.note-dur { color: var(--text2); }
+
+/* Stats */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-card {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* Bottom - Piano Roll / Timeline */
+.bottom-panel {
+  grid-column: 1 / -1;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-header {
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.timeline-canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4a5a; }
+
+/* Status */
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 4px 16px;
+  font-size: 10px;
+  color: var(--text2);
+  display: flex;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text2);
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { font-size: 14px; margin-bottom: 8px; color: var(--text); }
+.empty-state p { font-size: 12px; line-height: 1.6; }
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: pulse 1s infinite;
+}
+
+/* G-code preview */
+.gcode-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre;
+  line-height: 1.5;
+  color: var(--text2);
+}
+
+.gcode-preview .cmd { color: var(--accent); }
+.gcode-preview .coord { color: var(--accent-y); }
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.visible {
+  display: flex;
+}
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .main {
+    grid-template-columns: 260px 1fr 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 400px auto auto;
+  }
+  .left-panel, .right-panel {
+    border: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.tooltip {
+  position: relative;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.badge-x { background: rgba(255,107,74,0.2); color: var(--accent-x); }
+.badge-y { background: rgba(74,255,139,0.2); color: var(--accent-y); }
+.badge-z { background: rgba(74,158,255,0.2); color: var(--accent-z); }
+
+.waveform-select {
+  display: flex;
+  gap: 4px;
+}
+
+.wave-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text2);
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wave-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,159,67,0.1);
+}
+
+.wave-btn:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⚙</div>
+    <div class="logo-text">CNC <span>♪</span> STEPPER MUSIC</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" id="btnDemo" title="Загрузить демо мелодию">🎵 Демо</button>
+    <button class="btn" id="btnExportGcode" disabled title="Экспорт G-code">📤 G-code</button>
+    <button class="btn" id="btnExportNotes" disabled title="Экспорт маппинга нот">📋 Ноты</button>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <!-- Upload -->
+    <div class="panel-section">
+      <div class="panel-title">📂 MIDI Файл</div>
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">🎹</div>
+        <div class="upload-text">
+          Перетащите <strong>.midi</strong> файл<br>или нажмите для выбора
+        </div>
+        <input type="file" id="fileInput" accept=".midi,.mid" style="display:none">
+      </div>
+      <div class="file-info" id="fileInfo">
+        <div class="file-info-row"><span class="label">Файл:</span><span class="value" id="fileName">-</span></div>
+        <div class="file-info-row"><span class="label">Длительность:</span><span class="value" id="fileDuration">-</span></div>
+        <div class="file-info-row"><span class="label">Нот:</span><span class="value" id="fileNotes">-</span></div>
+        <div class="file-info-row"><span class="label">Дорожек:</span><span class="value" id="fileTracks">-</span></div>
+        <div class="file-info-row"><span class="label">Темп:</span><span class="value" id="fileTempo">-</span></div>
+      </div>
+    </div>
+
+    <!-- Axes Status -->
+    <div class="panel-section">
+      <div class="panel-title">🔧 Оси (3 мотора)</div>
+      <div class="axis-card x">
+        <div class="axis-header">
+          <span class="axis-name">X — Ось</span>
+          <span class="axis-note" id="axisXNote">—</span>
+        </div>
+        <div class="axis-bar"><div class="axis-bar-fill" id="axisXBar"></div></div>
+      </div>
+      <div class="axis-card y">
+        <div class="axis-header">
+          <span class="axis-name">Y — Ось</span>
+          <span class="axis-note" id="axisYNote">—</span>
+        </div>
+        <div class="axis-bar"><div class="axis-bar-fill" id="axisYBar"></div></div>
+      </div>
+      <div class="axis-card z">
+        <div class="axis-header">
+          <span class="axis-name">Z — Ось</span>
+          <span class="axis-note" id="axisZNote">—</span>
+        </div>
+        <div class="axis-bar"><div class="axis-bar-fill" id="axisZBar"></div></div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="panel-section">
+      <div class="panel-title">⚙ Настройки</div>
+      <div class="setting-row">
+        <label>Шагов/мм:</label>
+        <input type="number" id="stepsPerMm" value="80" min="1" max="1000">
+      </div>
+      <div class="setting-row">
+        <label>Область X:</label>
+        <input type="number" id="areaX" value="200" min="10" max="2000"> мм
+      </div>
+      <div class="setting-row">
+        <label>Область Y:</label>
+        <input type="number" id="areaY" value="200" min="10" max="2000"> мм
+      </div>
+      <div class="setting-row">
+        <label>Область Z:</label>
+        <input type="number" id="areaZ" value="200" min="10" max="2000"> мм
+      </div>
+      <div class="setting-row">
+        <label>Мин. нота:</label>
+        <select id="minNote">
+          <option value="36">C2 (36)</option>
+          <option value="48" selected>C3 (48)</option>
+          <option value="60">C4 (60)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>Макс. нота:</label>
+        <select id="maxNote">
+          <option value="72">C5 (72)</option>
+          <option value="84" selected>C6 (84)</option>
+          <option value="96">C7 (96)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>Скорость:</label>
+        <input type="range" id="speedRange" min="25" max="200" value="100">
+        <span id="speedValue">100%</span>
+      </div>
+    </div>
+
+    <!-- Sound -->
+    <div class="panel-section">
+      <div class="panel-title">🔊 Звук (симуляция)</div>
+      <div class="setting-row">
+        <label>Тип волны:</label>
+      </div>
+      <div class="waveform-select">
+        <button class="wave-btn active" data-wave="square">Квадрат</button>
+        <button class="wave-btn" data-wave="sawtooth">Пила</button>
+        <button class="wave-btn" data-wave="triangle">Треуг.</button>
+      </div>
+      <div class="setting-row" style="margin-top:8px">
+        <label>Громкость:</label>
+        <input type="range" id="volumeRange" min="0" max="100" value="30">
+      </div>
+    </div>
+  </div>
+
+  <!-- Center Panel -->
+  <div class="center-panel">
+    <div class="viz-container">
+      <canvas class="viz-canvas" id="vizCanvas"></canvas>
+      <div class="viz-overlay">
+        <div class="viz-badge" id="vizStatus">⏸ Ожидание</div>
+        <div class="viz-badge" id="vizPolyphony">Нот: 0/3</div>
+      </div>
+    </div>
+    <div class="transport-bar">
+      <button class="transport-btn play-btn" id="btnPlay" title="Воспроизвести">▶</button>
+      <button class="transport-btn" id="btnPause" title="Пауза" style="display:none">⏸</button>
+      <button class="transport-btn stop-btn" id="btnStop" title="Стоп">⏹</button>
+      <div class="time-display" id="timeDisplay">0:00.0</div>
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="volume-control">
+        🔊 <input type="range" id="masterVolume" min="0" max="100" value="30">
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <div class="panel-section">
+      <div class="panel-title">📊 Статистика</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statNotes">0</div>
+          <div class="stat-label">Всего нот</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statDuration">0s</div>
+          <div class="stat-label">Длительность</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAvgBPM">0</div>
+          <div class="stat-label">Средний BPM</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statRange">-</div>
+          <div class="stat-label">Диапазон</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">🎵 Активные ноты</div>
+      <div class="note-list" id="noteList">
+        <div style="text-align:center; color:var(--text2); font-size:11px; padding:20px;">
+          Загрузите MIDI файл
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">📝 G-code превью</div>
+      <div class="gcode-preview" id="gcodePreview">; Ожидание MIDI файла...
+; Загрузите файл для генерации</div>
+    </div>
+  </div>
+
+  <!-- Bottom - Timeline -->
+  <div class="bottom-panel">
+    <div class="timeline-header">
+      <span>🎼 Piano Roll — Визуализация нот</span>
+      <span id="timelineInfo">-</span>
+    </div>
+    <div class="timeline-canvas-wrap">
+      <canvas class="timeline-canvas" id="timelineCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <span id="statusLeft">Готов к работе</span>
+  <span id="statusRight">CNC Stepper Music Editor v1.0</span>
+</div>
+
+<!-- G-code Modal -->
+<div class="modal-overlay" id="gcodeModal">
+  <div class="modal">
+    <h2>📤 Экспорт G-code <button class="modal-close" id="modalClose">✕</button></h2>
+    <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">
+      G-code для загрузки в контроллер ЧПУ. Каждая нота = движение оси с определённой скоростью подачи (F).
+    </p>
+    <div class="gcode-preview" id="gcodeFull" style="max-height:400px;"></div>
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button class="btn btn-primary" id="btnDownloadGcode">💾 Скачать .gcode</button>
+      <button class="btn" id="btnCopyGcode">📋 Копировать</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// CNC STEPPER MUSIC EDITOR
+// ============================================
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+// MIDI note to frequency
+function midiToFreq(note) {
+  return 440 * Math.pow(2, (note - 69) / 12);
+}
+
+function midiToName(note) {
+  return NOTE_NAMES[note % 12] + Math.floor(note / 12 - 1);
+}
+
+// App State
+const state = {
+  midiData: null,
+  notes: [],           // parsed notes [{midi, name, freq, start, duration, axis}]
+  activeNotes: [null, null, null], // 3 axes
+  isPlaying: false,
+  isPaused: false,
+  currentTime: 0,
+  totalTime: 0,
+  tempo: 120,
+  waveform: 'square',
+  volume: 0.3,
+  speed: 1.0,
+  stepsPerMm: 80,
+  area: { x: 200, y: 200, z: 200 },
+  axisPositions: [100, 100, 100], // current positions
+  axisTargets: [100, 100, 100],
+  audioCtx: null,
+  oscillators: [null, null, null],
+  gainNodes: [null, null, null],
+  animFrame: null,
+  playStartTime: 0,
+  playOffset: 0,
+  gcodeLines: []
+};
+
+// Audio Context
+function initAudio() {
+  if (!state.audioCtx) {
+    state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (state.audioCtx.state === 'suspended') {
+    state.audioCtx.resume();
+  }
+}
+
+function createOscillator(axis) {
+  if (state.oscillators[axis]) {
+    state.oscillators[axis].stop();
+    state.oscillators[axis] = null;
+  }
+  
+  const ctx = state.audioCtx;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.type = state.waveform;
+  osc.frequency.value = 0;
+  gain.gain.value = 0;
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  
+  state.oscillators[axis] = osc;
+  state.gainNodes[axis] = gain;
+}
+
+function playNoteOn(axis, freq) {
+  if (!state.audioCtx) return;
+  
+  if (!state.oscillators[axis]) {
+    createOscillator(axis);
+  }
+  
+  const osc = state.oscillators[axis];
+  const gain = state.gainNodes[axis];
+  
+  osc.type = state.waveform;
+  osc.frequency.setTargetAtTime(freq, state.audioCtx.currentTime, 0.01);
+  gain.gain.setTargetAtTime(state.volume * 0.15, state.audioCtx.currentTime, 0.01);
+}
+
+function playNoteOff(axis) {
+  if (state.gainNodes[axis]) {
+    state.gainNodes[axis].gain.setTargetAtTime(0, state.audioCtx.currentTime, 0.02);
+  }
+}
+
+function stopAllAudio() {
+  for (let i = 0; i < 3; i++) {
+    if (state.oscillators[i]) {
+      try { state.oscillators[i].stop(); } catch(e) {}
+      state.oscillators[i] = null;
+      state.gainNodes[i] = null;
+    }
+  }
+}
+
+// File Upload
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    handleFile(e.dataTransfer.files[0]);
+  }
+});
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files.length) {
+    handleFile(e.target.files[0]);
+  }
+});
+
+async function handleFile(file) {
+  if (!file.name.match(/\.(midi|mid)$/i)) {
+    alert('Пожалуйста, выберите MIDI файл (.midi или .mid)');
+    return;
+  }
+  
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // Check if Tonejs MIDI is loaded
+    if (typeof Midi === 'undefined') {
+      alert('Библиотека MIDI не загружена. Проверьте интернет-соединение.');
+      return;
+    }
+    
+    const midi = new Midi(arrayBuffer);
+    parseMidi(midi, file.name);
+  } catch (err) {
+    console.error(err);
+    alert('Ошибка при чтении MIDI файла: ' + err.message);
+  }
+}
+
+function parseMidi(midi, fileName) {
+  state.midiData = midi;
+  state.tempo = midi.header.tempos.length > 0 ? midi.header.tempos[0].bpm : 120;
+  
+  const minNote = parseInt(document.getElementById('minNote').value);
+  const maxNote = parseInt(document.getElementById('maxNote').value);
+  
+  // Collect all notes from all tracks
+  let allNotes = [];
+  midi.tracks.forEach((track, ti) => {
+    track.notes.forEach(note => {
+      if (note.midi >= minNote && note.midi <= maxNote) {
+        allNotes.push({
+          midi: note.midi,
+          name: midiToName(note.midi),
+          freq: midiToFreq(note.midi),
+          start: note.time,
+          duration: note.duration,
+          velocity: note.velocity,
+          track: ti
+        });
+      }
+    });
+  });
+  
+  // Sort by start time
+  allNotes.sort((a, b) => a.start - b.start);
+  
+  // Assign axes (max 3 simultaneous)
+  assignAxes(allNotes);
+  
+  state.notes = allNotes;
+  state.totalTime = allNotes.length > 0 ? 
+    Math.max(...allNotes.map(n => n.start + n.duration)) : 0;
+  
+  // Update UI
+  document.getElementById('fileName').textContent = fileName;
+  document.getElementById('fileDuration').textContent = state.totalTime.toFixed(1) + 's';
+  document.getElementById('fileNotes').textContent = allNotes.length;
+  document.getElementById('fileTracks').textContent = midi.tracks.length;
+  document.getElementById('fileTempo').textContent = state.tempo.toFixed(0) + ' BPM';
+  document.getElementById('fileInfo').classList.add('visible');
+  
+  document.getElementById('statNotes').textContent = allNotes.length;
+  document.getElementById('statDuration').textContent = state.totalTime.toFixed(1) + 's';
+  document.getElementById('statAvgBPM').textContent = state.tempo.toFixed(0);
+  
+  if (allNotes.length > 0) {
+    const minN = Math.min(...allNotes.map(n => n.midi));
+    const maxN = Math.max(...allNotes.map(n => n.midi));
+    document.getElementById('statRange').textContent = midiToName(minN) + '-' + midiToName(maxN);
+  }
+  
+  document.getElementById('btnExportGcode').disabled = false;
+  document.getElementById('btnExportNotes').disabled = false;
+  
+  document.getElementById('timelineInfo').textContent = 
+    `${allNotes.length} нот | ${state.totalTime.toFixed(1)}s | ${state.tempo} BPM`;
+  
+  // Generate G-code
+  generateGcode();
+  
+  // Update note list
+  updateNoteList();
+  
+  // Draw timeline
+  drawTimeline();
+  
+  document.getElementById('statusLeft').textContent = `Загружено: ${fileName} | ${allNotes.length} нот`;
+}
+
+function assignAxes(notes) {
+  // For each note, assign to one of 3 axes
+  // Strategy: round-robin based on pitch, or based on availability
+  const axisEndTimes = [0, 0, 0]; // when each axis becomes free
+  
+  notes.forEach(note => {
+    // Find the axis that is free earliest, prefer axis that matches pitch range
+    let bestAxis = 0;
+    let bestTime = Infinity;
+    
+    for (let i = 0; i < 3; i++) {
+      if (axisEndTimes[i] <= note.start + 0.001) {
+        // This axis is free
+        bestAxis = i;
+        bestTime = axisEndTimes[i];
+        break;
+      }
+      if (axisEndTimes[i] < bestTime) {
+        bestTime = axisEndTimes[i];
+        bestAxis = i;
+      }
+    }
+    
+    // Distribute based on pitch for visual variety
+    const pitchClass = note.midi % 3;
+    // Try to use pitch class as axis if available
+    if (axisEndTimes[pitchClass] <= note.start + 0.001) {
+      bestAxis = pitchClass;
+    }
+    
+    note.axis = bestAxis;
+    axisEndTimes[bestAxis] = note.start + note.duration;
+  });
+}
+
+function updateNoteList() {
+  const list = document.getElementById('noteList');
+  if (state.notes.length === 0) {
+    list.innerHTML = '<div style="text-align:center; color:var(--text2); font-size:11px; padding:20px;">Нет нот</div>';
+    return;
+  }
+  
+  // Show first 50 notes
+  const showNotes = state.notes.slice(0, 50);
+  const axisClasses = ['x', 'y', 'z'];
+  
+  list.innerHTML = showNotes.map((n, i) => `
+    <div class="note-item" data-idx="${i}">
+      <div class="note-dot ${axisClasses[n.axis]}"></div>
+      <span class="note-name">${n.name}</span>
+      <span class="note-freq">${n.freq.toFixed(0)}Hz</span>
+      <span class="note-dur">${(n.duration * 1000).toFixed(0)}ms</span>
+      <span class="note-time">${n.start.toFixed(2)}s</span>
+    </div>
+  `).join('') + (state.notes.length > 50 ? 
+    `<div style="text-align:center; color:var(--text2); font-size:10px; padding:8px;">...и ещё ${state.notes.length - 50} нот</div>` : '');
+}
+
+// G-code Generation
+function generateGcode() {
+  const lines = [];
+  const stepsPerMm = state.stepsPerMm;
+  const area = {
+    x: parseFloat(document.getElementById('areaX').value),
+    y: parseFloat(document.getElementById('areaY').value),
+    z: parseFloat(document.getElementById('areaZ').value)
+  };
+  
+  lines.push('; CNC Stepper Music - G-code');
+  lines.push('; Сгенерировано CNC Stepper Music Editor');
+  lines.push('; Область: ' + area.x + 'x' + area.y + 'x' + area.z + ' мм');
+  lines.push('; Шагов/мм: ' + stepsPerMm);
+  lines.push('; Нот: ' + state.notes.length);
+  lines.push(';');
+  lines.push('G21 ; мм');
+  lines.push('G90 ; абсолютные координаты');
+  lines.push('G92 X0 Y0 Z0 ; установить начало координат');
+  lines.push('');
+  
+  const axisNames = ['X', 'Y', 'Z'];
+  let positions = [area.x / 2, area.y / 2, area.z / 2];
+  
+  state.notes.forEach((note, idx) => {
+    const axis = axisNames[note.axis];
+    const feedRate = Math.round(note.freq * stepsPerMm / 10); // scale to reasonable feed rate
+    
+    // Calculate target position within area
+    // Map note pitch to position within the axis range
+    const minNote = parseInt(document.getElementById('minNote').value);
+    const maxNote = parseInt(document.getElementById('maxNote').value);
+    const noteRatio = (note.midi - minNote) / (maxNote - minNote);
+    
+    // Alternate direction for movement
+    const target = noteRatio * area[axisNames.indexOf(axis)];
+    
+    // Move to produce sound at this frequency
+    // The feed rate F determines the step frequency = sound frequency
+    const distance = Math.abs(target - positions[note.axis]);
+    const moveDistance = Math.max(distance, 1); // minimum 1mm move
+    
+    // Alternate direction
+    const direction = (idx % 2 === 0) ? 1 : -1;
+    const newTarget = Math.min(Math.max(
+      positions[note.axis] + direction * moveDistance, 
+      0
+    ), area[axisNames.indexOf(axis)]);
+    
+    lines.push(`; Нота: ${note.name} (${note.freq.toFixed(1)}Hz) Ось: ${axis} T:${note.start.toFixed(3)}s`);
+    lines.push(`G1 ${axis}${newTarget.toFixed(2)} F${feedRate}`);
+    
+    positions[note.axis] = newTarget;
+  });
+  
+  lines.push('');
+  lines.push('; Конец');
+  lines.push('G0 X' + (area.x/2).toFixed(2) + ' Y' + (area.y/2).toFixed(2) + ' Z' + (area.z/2).toFixed(2));
+  lines.push('M2 ; конец программы');
+  
+  state.gcodeLines = lines;
+  
+  // Preview (first 30 lines)
+  const preview = lines.slice(0, 30).map(line => {
+    if (line.startsWith(';')) return line;
+    return line.replace(/([GFM]\d+)/g, '<span class="cmd">$1</span>')
+               .replace(/([XYZ]-?[\d.]+)/g, '<span class="coord">$1</span>');
+  }).join('\n');
+  
+  document.getElementById('gcodePreview').innerHTML = preview + (lines.length > 30 ? '\n...' : '');
+  document.getElementById('gcodeFull').innerHTML = lines.map(line => {
+    if (line.startsWith(';')) return line;
+    return line.replace(/([GFM]\d+)/g, '<span class="cmd">$1</span>')
+               .replace(/([XYZ]-?[\d.]+)/g, '<span class="coord">$1</span>');
+  }).join('\n');
+}
+
+// Playback
+function startPlayback() {
+  if (state.notes.length === 0) return;
+  
+  initAudio();
+  
+  state.isPlaying = true;
+  state.isPaused = false;
+  state.playStartTime = performance.now() / 1000 - state.playOffset;
+  
+  document.getElementById('btnPlay').style.display = 'none';
+  document.getElementById('btnPause').style.display = 'flex';
+  document.getElementById('vizStatus').innerHTML = '<span class="recording-dot" style="display:inline-block;margin-right:4px;"></span> Воспроизведение';
+  
+  playbackLoop();
+}
+
+function pausePlayback() {
+  state.isPaused = true;
+  state.isPlaying = false;
+  state.playOffset = state.currentTime;
+  
+  document.getElementById('btnPlay').style.display = 'flex';
+  document.getElementById('btnPause').style.display = 'none';
+  document.getElementById('vizStatus').textContent = '⏸ Пауза';
+  
+  stopAllAudio();
+  state.activeNotes = [null, null, null];
+  updateAxisDisplay();
+}
+
+function stopPlayback() {
+  state.isPlaying = false;
+  state.isPaused = false;
+  state.currentTime = 0;
+  state.playOffset = 0;
+  
+  document.getElementById('btnPlay').style.display = 'flex';
+  document.getElementById('btnPause').style.display = 'none';
+  document.getElementById('vizStatus').textContent = '⏸ Ожидание';
+  
+  stopAllAudio();
+  state.activeNotes = [null, null, null];
+  state.axisPositions = [
+    parseFloat(document.getElementById('areaX').value) / 2,
+    parseFloat(document.getElementById('areaY').value) / 2,
+    parseFloat(document.getElementById('areaZ').value) / 2
+  ];
+  
+  updateAxisDisplay();
+  updateProgress();
+  drawTimeline();
+}
+
+function playbackLoop() {
+  if (!state.isPlaying) return;
+  
+  const now = performance.now() / 1000;
+  state.currentTime = (now - state.playStartTime) * state.speed;
+  
+  if (state.currentTime >= state.totalTime) {
+    stopPlayback();
+    return;
+  }
+  
+  // Process notes at current time
+  processNotesAtTime(state.currentTime);
+  
+  // Update UI
+  updateProgress();
+  updateAxisDisplay();
+  updateActiveNoteList();
+  drawTimeline();
+  
+  state.animFrame = requestAnimationFrame(playbackLoop);
+}
+
+function processNotesAtTime(time) {
+  const axisNames = ['X', 'Y', 'Z'];
+  const area = {
+    x: parseFloat(document.getElementById('areaX').value),
+    y: parseFloat(document.getElementById('areaY').value),
+    z: parseFloat(document.getElementById('areaZ').value)
+  };
+  
+  state.notes.forEach(note => {
+    const noteEnd = note.start + note.duration;
+    const axis = note.axis;
+    
+    if (time >= note.start && time < noteEnd) {
+      // Note is active
+      if (state.activeNotes[axis] !== note) {
+        // Note on
+        state.activeNotes[axis] = note;
+        playNoteOn(axis, note.freq);
+        
+        // Move axis
+        const minNote = parseInt(document.getElementById('minNote').value);
+        const maxNote = parseInt(document.getElementById('maxNote').value);
+        const ratio = (note.midi - minNote) / (maxNote - minNote);
+        state.axisTargets[axis] = ratio * area[axisNames[axis].toLowerCase()];
+      }
+    } else if (state.activeNotes[axis] === note) {
+      // Note off
+      state.activeNotes[axis] = null;
+      playNoteOff(axis);
+    }
+  });
+  
+  // Animate axis positions toward targets
+  for (let i = 0; i < 3; i++) {
+    const diff = state.axisTargets[i] - state.axisPositions[i];
+    state.axisPositions[i] += diff * 0.15;
+  }
+}
+
+function updateProgress() {
+  const pct = state.totalTime > 0 ? (state.currentTime / state.totalTime) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  
+  const mins = Math.floor(state.currentTime / 60);
+  const secs = (state.currentTime % 60).toFixed(1);
+  document.getElementById('timeDisplay').textContent = 
+    `${mins}:${secs.padStart(4, '0')}`;
+}
+
+function updateAxisDisplay() {
+  const axisNames = ['X', 'Y', 'Z'];
+  const ids = ['axisX', 'axisY', 'axisZ'];
+  const area = {
+    x: parseFloat(document.getElementById('areaX').value),
+    y: parseFloat(document.getElementById('areaY').value),
+    z: parseFloat(document.getElementById('areaZ').value)
+  };
+  
+  for (let i = 0; i < 3; i++) {
+    const note = state.activeNotes[i];
+    const noteEl = document.getElementById(ids[i] + 'Note');
+    const barEl = document.getElementById(ids[i] + 'Bar');
+    
+    if (note) {
+      noteEl.textContent = `${note.name} (${note.freq.toFixed(0)}Hz)`;
+      const pct = (state.axisPositions[i] / area[axisNames[i].toLowerCase()]) * 100;
+      barEl.style.width = pct + '%';
+    } else {
+      noteEl.textContent = '—';
+      barEl.style.width = '0%';
+    }
+  }
+  
+  const activeCount = state.activeNotes.filter(n => n !== null).length;
+  document.getElementById('vizPolyphony').textContent = `Нот: ${activeCount}/3`;
+}
+
+function updateActiveNoteList() {
+  // Highlight active notes in the list
+  const items = document.querySelectorAll('.note-item');
+  items.forEach(item => {
+    const idx = parseInt(item.dataset.idx);
+    const note = state.notes[idx];
+    if (note && state.currentTime >= note.start && state.currentTime < note.start + note.duration) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+// Visualization Canvas
+const vizCanvas = document.getElementById('vizCanvas');
+const vizCtx = vizCanvas.getContext('2d');
+
+function resizeVizCanvas() {
+  const rect = vizCanvas.parentElement.getBoundingClientRect();
+  vizCanvas.width = rect.width * window.devicePixelRatio;
+  vizCanvas.height = rect.height * window.devicePixelRatio;
+  vizCanvas.style.width = rect.width + 'px';
+  vizCanvas.style.height = rect.height + 'px';
+  vizCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+function drawVisualization() {
+  const w = vizCanvas.width / window.devicePixelRatio;
+  const h = vizCanvas.height / window.devicePixelRatio;
+  
+  vizCtx.clearRect(0, 0, w, h);
+  
+  // Background grid
+  const gridSize = 40;
+  vizCtx.strokeStyle = 'rgba(42,52,68,0.5)';
+  vizCtx.lineWidth = 0.5;
+  
+  for (let x = 0; x < w; x += gridSize) {
+    vizCtx.beginPath();
+    vizCtx.moveTo(x, 0);
+    vizCtx.lineTo(x, h);
+    vizCtx.stroke();
+  }
+  for (let y = 0; y < h; y += gridSize) {
+    vizCtx.beginPath();
+    vizCtx.moveTo(0, y);
+    vizCtx.lineTo(w, y);
+    vizCtx.stroke();
+  }
+  
+  // Draw work area (isometric-ish view)
+  const cx = w / 2;
+  const cy = h / 2;
+  const scale = Math.min(w, h) * 0.35;
+  
+  // Area box
+  vizCtx.strokeStyle = 'rgba(42,52,68,0.8)';
+  vizCtx.lineWidth = 1;
+  vizCtx.strokeRect(cx - scale/2, cy - scale/2, scale, scale);
+  
+  // Axis labels
+  vizCtx.font = '11px JetBrains Mono';
+  vizCtx.fillStyle = '#ff6b4a';
+  vizCtx.fillText('X →', cx + scale/2 + 8, cy + 4);
+  vizCtx.fillStyle = '#4aff8b';
+  vizCtx.fillText('Y ↓', cx - 12, cy + scale/2 + 16);
+  vizCtx.fillStyle = '#4a9eff';
+  vizCtx.fillText('Z', cx - scale/2 - 20, cy - scale/2 + 4);
+  
+  // Draw axis positions as moving elements
+  const area = {
+    x: parseFloat(document.getElementById('areaX').value),
+    y: parseFloat(document.getElementById('areaY').value),
+    z: parseFloat(document.getElementById('areaZ').value)
+  };
+  
+  const colors = ['#ff6b4a', '#4aff8b', '#4a9eff'];
+  const axisLabels = ['X', 'Y', 'Z'];
+  
+  for (let i = 0; i < 3; i++) {
+    const note = state.activeNotes[i];
+    const posRatio = state.axisPositions[i] / area[axisLabels[i].toLowerCase()];
+    
+    // Position on the visualization
+    let px, py;
+    if (i === 0) { // X axis - horizontal
+      px = cx - scale/2 + posRatio * scale;
+      py = cy - scale/2 - 20;
+    } else if (i === 1) { // Y axis - vertical
+      px = cx + scale/2 + 20;
+      py = cy - scale/2 + posRatio * scale;
+    } else { // Z axis - diagonal
+      px = cx - scale/2 - 20;
+      py = cy - scale/2 + posRatio * scale;
+    }
+    
+    // Draw trail
+    if (note) {
+      const freq = note.freq;
+      const amplitude = 3 + (freq / 200);
+      
+      // Wave pattern around the position
+      vizCtx.strokeStyle = colors[i];
+      vizCtx.lineWidth = 2;
+      vizCtx.globalAlpha = 0.6;
+      vizCtx.beginPath();
+      
+      for (let t = 0; t < 60; t++) {
+        const waveX = px + t - 30;
+        const waveY = py + Math.sin(t * freq / 100 + performance.now() / 100) * amplitude;
+        if (t === 0) vizCtx.moveTo(waveX, waveY);
+        else vizCtx.lineTo(waveX, waveY);
+      }
+      vizCtx.stroke();
+      vizCtx.globalAlpha = 1;
+    }
+    
+    // Draw position indicator
+    const size = note ? 12 : 8;
+    vizCtx.fillStyle = colors[i];
+    vizCtx.globalAlpha = note ? 1 : 0.4;
+    
+    vizCtx.beginPath();
+    vizCtx.arc(px, py, size, 0, Math.PI * 2);
+    vizCtx.fill();
+    
+    // Glow effect when active
+    if (note) {
+      vizCtx.globalAlpha = 0.2;
+      vizCtx.beginPath();
+      vizCtx.arc(px, py, size + 8 + Math.sin(performance.now() / 200) * 4, 0, Math.PI * 2);
+      vizCtx.fill();
+    }
+    
+    vizCtx.globalAlpha = 1;
+    
+    // Label
+    vizCtx.fillStyle = colors[i];
+    vizCtx.font = 'bold 10px JetBrains Mono';
+    vizCtx.fillText(axisLabels[i], px - 3, py - size - 5);
+    
+    if (note) {
+      vizCtx.font = '9px JetBrains Mono';
+      vizCtx.fillStyle = '#c5cdd8';
+      vizCtx.fillText(note.name, px - 8, py + size + 14);
+    }
+  }
+  
+  // Center crosshair
+  vizCtx.strokeStyle = 'rgba(255,255,255,0.1)';
+  vizCtx.lineWidth = 1;
+  vizCtx.setLineDash([4, 4]);
+  vizCtx.beginPath();
+  vizCtx.moveTo(cx, cy - scale/2);
+  vizCtx.lineTo(cx, cy + scale/2);
+  vizCtx.moveTo(cx - scale/2, cy);
+  vizCtx.lineTo(cx + scale/2, cy);
+  vizCtx.stroke();
+  vizCtx.setLineDash([]);
+  
+  // Info text
+  vizCtx.fillStyle = 'rgba(122,134,148,0.6)';
+  vizCtx.font = '10px JetBrains Mono';
+  vizCtx.fillText(`Область: ${area.x}×${area.y}×${area.z} мм`, cx - scale/2, cy + scale/2 + 30);
+  vizCtx.fillText(`Шагов/мм: ${state.stepsPerMm}`, cx - scale/2, cy + scale/2 + 44);
+}
+
+// Timeline / Piano Roll
+const timelineCanvas = document.getElementById('timelineCanvas');
+const timelineCtx = timelineCanvas.getContext('2d');
+
+function resizeTimelineCanvas() {
+  const rect = timelineCanvas.parentElement.getBoundingClientRect();
+  timelineCanvas.width = rect.width * window.devicePixelRatio;
+  timelineCanvas.height = rect.height * window.devicePixelRatio;
+  timelineCanvas.style.width = rect.width + 'px';
+  timelineCanvas.style.height = rect.height + 'px';
+  timelineCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+function drawTimeline() {
+  const w = timelineCanvas.width / window.devicePixelRatio;
+  const h = timelineCanvas.height / window.devicePixelRatio;
+  
+  timelineCtx.clearRect(0, 0, w, h);
+  
+  if (state.notes.length === 0) {
+    timelineCtx.fillStyle = 'rgba(122,134,148,0.4)';
+    timelineCtx.font = '12px JetBrains Mono';
+    timelineCtx.textAlign = 'center';
+    timelineCtx.fillText('Загрузите MIDI файл для отображения нот', w/2, h/2);
+    timelineCtx.textAlign = 'left';
+    return;
+  }
+  
+  const minNote = parseInt(document.getElementById('minNote').value);
+  const maxNote = parseInt(document.getElementById('maxNote').value);
+  const noteRange = maxNote - minNote + 1;
+  
+  const leftMargin = 40;
+  const topMargin = 15;
+  const bottomMargin = 20;
+  const plotW = w - leftMargin - 10;
+  const plotH = h - topMargin - bottomMargin;
+  
+  const noteH = plotH / noteRange;
+  const timeScale = plotW / Math.max(state.totalTime, 1);
+  
+  // Draw piano keys on left
+  for (let n = minNote; n <= maxNote; n++) {
+    const y = topMargin + (maxNote - n) * noteH;
+    const isBlack = [1,3,6,8,10].includes(n % 12);
+    
+    timelineCtx.fillStyle = isBlack ? 'rgba(20,25,35,0.8)' : 'rgba(30,38,50,0.5)';
+    timelineCtx.fillRect(0, y, leftMargin - 2, noteH);
+    
+    if (n % 12 === 0) { // C notes
+      timelineCtx.fillStyle = 'rgba(122,134,148,0.6)';
+      timelineCtx.font = '8px JetBrains Mono';
+      timelineCtx.fillText(midiToName(n), 4, y + noteH - 2);
+      
+      timelineCtx.strokeStyle = 'rgba(42,52,68,0.5)';
+      timelineCtx.lineWidth = 0.5;
+      timelineCtx.beginPath();
+      timelineCtx.moveTo(leftMargin, y + noteH);
+      timelineCtx.lineTo(w, y + noteH);
+      timelineCtx.stroke();
+    }
+  }
+  
+  // Draw time grid
+  const timeStep = state.totalTime > 30 ? 5 : state.totalTime > 10 ? 2 : 1;
+  timelineCtx.strokeStyle = 'rgba(42,52,68,0.4)';
+  timelineCtx.lineWidth = 0.5;
+  timelineCtx.fillStyle = 'rgba(122,134,148,0.5)';
+  timelineCtx.font = '9px JetBrains Mono';
+  
+  for (let t = 0; t <= state.totalTime; t += timeStep) {
+    const x = leftMargin + t * timeScale;
+    timelineCtx.beginPath();
+    timelineCtx.moveTo(x, topMargin);
+    timelineCtx.lineTo(x, topMargin + plotH);
+    timelineCtx.stroke();
+    timelineCtx.fillText(t + 's', x + 2, topMargin + plotH + 14);
+  }
+  
+  // Draw notes
+  const colors = ['#ff6b4a', '#4aff8b', '#4a9eff'];
+  
+  state.notes.forEach(note => {
+    const x = leftMargin + note.start * timeScale;
+    const noteWidth = Math.max(note.duration * timeScale, 2);
+    const y = topMargin + (maxNote - note.midi) * noteH;
+    
+    const isActive = state.isPlaying && 
+      state.currentTime >= note.start && 
+      state.currentTime < note.start + note.duration;
+    
+    timelineCtx.fillStyle = colors[note.axis];
+    timelineCtx.globalAlpha = isActive ? 1 : 0.6;
+    
+    const radius = Math.min(3, noteH / 2, noteWidth / 2);
+    timelineCtx.beginPath();
+    timelineCtx.roundRect(x, y + 1, noteWidth, noteH - 2, radius);
+    timelineCtx.fill();
+    
+    if (isActive) {
+      timelineCtx.globalAlpha = 0.3;
+      timelineCtx.beginPath();
+      timelineCtx.roundRect(x - 2, y - 1, noteWidth + 4, noteH + 2, radius + 1);
+      timelineCtx.fill();
+    }
+    
+    timelineCtx.globalAlpha = 1;
+  });
+  
+  // Draw playhead
+  if (state.isPlaying || state.currentTime > 0) {
+    const px = leftMargin + state.currentTime * timeScale;
+    timelineCtx.strokeStyle = '#ff9f43';
+    timelineCtx.lineWidth = 2;
+    timelineCtx.beginPath();
+    timelineCtx.moveTo(px, topMargin);
+    timelineCtx.lineTo(px, topMargin + plotH);
+    timelineCtx.stroke();
+    
+    // Playhead triangle
+    timelineCtx.fillStyle = '#ff9f43';
+    timelineCtx.beginPath();
+    timelineCtx.moveTo(px - 5, topMargin);
+    timelineCtx.lineTo(px + 5, topMargin);
+    timelineCtx.lineTo(px, topMargin + 8);
+    timelineCtx.fill();
+  }
+}
+
+// Animation loop for visualization
+function vizLoop() {
+  drawVisualization();
+  requestAnimationFrame(vizLoop);
+}
+
+// Event Listeners
+document.getElementById('btnPlay').addEventListener('click', startPlayback);
+document.getElementById('btnPause').addEventListener('click', pausePlayback);
+document.getElementById('btnStop').addEventListener('click', stopPlayback);
+
+document.getElementById('progressBar').addEventListener('click', (e) => {
+  if (state.totalTime === 0) return;
+  const rect = e.target.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const newTime = pct * state.totalTime;
+  
+  state.playOffset = newTime;
+  state.currentTime = newTime;
+  
+  if (state.isPlaying) {
+    state.playStartTime = performance.now() / 1000 - newTime / state.speed;
+  }
+  
+  // Reset active notes
+  state.activeNotes = [null, null, null];
+  stopAllAudio();
+  
+  updateProgress();
+  drawTimeline();
+});
+
+// Speed control
+document.getElementById('speedRange').addEventListener('input', (e) => {
+  state.speed = e.target.value / 100;
+  document.getElementById('speedValue').textContent = e.target.value + '%';
+  
+  if (state.isPlaying) {
+    state.playStartTime = performance.now() / 1000 - state.currentTime / state.speed;
+  }
+});
+
+// Volume
+document.getElementById('volumeRange').addEventListener('input', (e) => {
+  state.volume = e.target.value / 100;
+});
+
+document.getElementById('masterVolume').addEventListener('input', (e) => {
+  state.volume = e.target.value / 100;
+  document.getElementById('volumeRange').value = e.target.value;
+});
+
+// Waveform
+document.querySelectorAll('.wave-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.waveform = btn.dataset.wave;
+  });
+});
+
+// Settings changes
+['stepsPerMm', 'areaX', 'areaY', 'areaZ', 'minNote', 'maxNote'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    state.stepsPerMm = parseInt(document.getElementById('stepsPerMm').value);
+    if (state.notes.length > 0) {
+      // Reassign axes with new range
+      const minNote = parseInt(document.getElementById('minNote').value);
+      const maxNote = parseInt(document.getElementById('maxNote').value);
+      
+      state.notes.forEach(n => {
+        n.freq = midiToFreq(n.midi);
+        n.name = midiToName(n.midi);
+      });
+      
+      assignAxes(state.notes);
+      generateGcode();
+      updateNoteList();
+      drawTimeline();
+    }
+  });
+});
+
+// Export G-code
+document.getElementById('btnExportGcode').addEventListener('click', () => {
+  document.getElementById('gcodeModal').classList.add('visible');
+});
+
+document.getElementById('modalClose').addEventListener('click', () => {
+  document.getElementById('gcodeModal').classList.remove('visible');
+});
+
+document.getElementById('btnDownloadGcode').addEventListener('click', () => {
+  const content = state.gcodeLines.join('\n');
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cnc_music.gcode';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btnCopyGcode').addEventListener('click', () => {
+  const content = state.gcodeLines.join('\n');
+  navigator.clipboard.writeText(content).then(() => {
+    document.getElementById('btnCopyGcode').textContent = '✓ Скопировано';
+    setTimeout(() => {
+      document.getElementById('btnCopyGcode').textContent = '📋 Копировать';
+    }, 2000);
+  });
+});
+
+// Export Notes
+document.getElementById('btnExportNotes').addEventListener('click', () => {
+  let csv = 'Note,MIDI,Frequency(Hz),Start(s),Duration(s),Axis,FeedRate\n';
+  state.notes.forEach(n => {
+    const feedRate = Math.round(n.freq * state.stepsPerMm / 10);
+    csv += `${n.name},${n.midi},${n.freq.toFixed(2)},${n.start.toFixed(4)},${n.duration.toFixed(4)},${['X','Y','Z'][n.axis]},${feedRate}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cnc_notes_mapping.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Demo melody
+document.getElementById('btnDemo').addEventListener('click', () => {
+  // Generate a simple demo melody (Twinkle Twinkle Little Star)
+  const melody = [
+    { midi: 60, start: 0, duration: 0.5 },    // C4
+    { midi: 60, start: 0.5, duration: 0.5 },   // C4
+    { midi: 67, start: 1.0, duration: 0.5 },   // G4
+    { midi: 67, start: 1.5, duration: 0.5 },   // G4
+    { midi: 69, start: 2.0, duration: 0.5 },   // A4
+    { midi: 69, start: 2.5, duration: 0.5 },   // A4
+    { midi: 67, start: 3.0, duration: 1.0 },   // G4
+    { midi: 65, start: 4.0, duration: 0.5 },   // F4
+    { midi: 65, start: 4.5, duration: 0.5 },   // F4
+    { midi: 64, start: 5.0, duration: 0.5 },   // E4
+    { midi: 64, start: 5.5, duration: 0.5 },   // E4
+    { midi: 62, start: 6.0, duration: 0.5 },   // D4
+    { midi: 62, start: 6.5, duration: 0.5 },   // D4
+    { midi: 60, start: 7.0, duration: 1.0 },   // C4
+    // Second phrase
+    { midi: 67, start: 8.0, duration: 0.5 },   // G4
+    { midi: 67, start: 8.5, duration: 0.5 },   // G4
+    { midi: 65, start: 9.0, duration: 0.5 },   // F4
+    { midi: 65, start: 9.5, duration: 0.5 },   // F4
+    { midi: 64, start: 10.0, duration: 0.5 },  // E4
+    { midi: 64, start: 10.5, duration: 0.5 },  // E4
+    { midi: 62, start: 11.0, duration: 1.0 },  // D4
+    { midi: 67, start: 12.0, duration: 0.5 },  // G4
+    { midi: 67, start: 12.5, duration: 0.5 },  // G4
+    { midi: 65, start: 13.0, duration: 0.5 },  // F4
+    { midi: 65, start: 13.5, duration: 0.5 },  // F4
+    { midi: 64, start: 14.0, duration: 0.5 },  // E4
+    { midi: 64, start: 14.5, duration: 0.5 },  // E4
+    { midi: 62, start: 15.0, duration: 1.0 },  // D4
+    // Third phrase
+    { midi: 60, start: 16.0, duration: 0.5 },
+    { midi: 60, start: 16.5, duration: 0.5 },
+    { midi: 67, start: 17.0, duration: 0.5 },
+    { midi: 67, start: 17.5, duration: 0.5 },
+    { midi: 69, start: 18.0, duration: 0.5 },
+    { midi: 69, start: 18.5, duration: 0.5 },
+    { midi: 67, start: 19.0, duration: 1.0 },
+    { midi: 65, start: 20.0, duration: 0.5 },
+    { midi: 65, start: 20.5, duration: 0.5 },
+    { midi: 64, start: 21.0, duration: 0.5 },
+    { midi: 64, start: 21.5, duration: 0.5 },
+    { midi: 62, start: 22.0, duration: 0.5 },
+    { midi: 62, start: 22.5, duration: 0.5 },
+    { midi: 60, start: 23.0, duration: 1.0 },
+  ];
+  
+  const notes = melody.map(n => ({
+    midi: n.midi,
+    name: midiToName(n.midi),
+    freq: midiToFreq(n.midi),
+    start: n.start,
+    duration: n.duration,
+    velocity: 0.8,
+    track: 0
+  }));
+  
+  assignAxes(notes);
+  
+  state.notes = notes;
+  state.totalTime = 24;
+  state.tempo = 120;
+  state.midiData = { demo: true };
+  
+  // Update UI
+  document.getElementById('fileName').textContent = 'Демо: Twinkle Twinkle';
+  document.getElementById('fileDuration').textContent = '24.0s';
+  document.getElementById('fileNotes').textContent = notes.length;
+  document.getElementById('fileTracks').textContent = '1';
+  document.getElementById('fileTempo').textContent = '120 BPM';
+  document.getElementById('fileInfo').classList.add('visible');
+  
+  document.getElementById('statNotes').textContent = notes.length;
+  document.getElementById('statDuration').textContent = '24.0s';
+  document.getElementById('statAvgBPM').textContent = '120';
+  document.getElementById('statRange').textContent = 'C4-G4';
+  
+  document.getElementById('btnExportGcode').disabled = false;
+  document.getElementById('btnExportNotes').disabled = false;
+  document.getElementById('timelineInfo').textContent = `${notes.length} нот | 24.0s | 120 BPM`;
+  
+  generateGcode();
+  updateNoteList();
+  drawTimeline();
+  
+  document.getElementById('statusLeft').textContent = 'Загружено демо: Twinkle Twinkle Little Star';
+});
+
+// Resize handling
+function handleResize() {
+  resizeVizCanvas();
+  resizeTimelineCanvas();
+  drawTimeline();
+}
+
+window.addEventListener('resize', handleResize);
+
+// Initialize
+handleResize();
+vizLoop();
+drawTimeline();
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (state.isPlaying) {
+      pausePlayback();
+    } else if (state.notes.length > 0) {
+      startPlayback();
+    }
+  }
+  if (e.code === 'Escape') {
+    stopPlayback();
+    document.getElementById('gcodeModal').classList.remove('visible');
+  }
+});
+
+// Click on modal overlay to close
+document.getElementById('gcodeModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('gcodeModal')) {
+    document.getElementById('gcodeModal').classList.remove('visible');
+  }
+});
+
+// roundRect polyfill
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (typeof r === 'number') r = [r, r, r, r];
+    const [tl, tr, br, bl] = r;
+    this.moveTo(x + tl, y);
+    this.lineTo(x + w - tr, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + tr);
+    this.lineTo(x + w, y + h - br);
+    this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+    this.lineTo(x + bl, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - bl);
+    this.lineTo(x, y + tl);
+    this.quadraticCurveTo(x, y, x + tl, y);
+    this.closePath();
+    return this;
+  };
+}
+</script>
+</body>
+</html>
 
