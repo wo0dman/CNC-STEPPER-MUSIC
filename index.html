@@ -25,16 +25,21 @@
   --success: #2ed573;
 }
 
+html { height: 100%; }
+
 body {
   font-family: 'JetBrains Mono', monospace;
   background: var(--bg);
   color: var(--text);
-  overflow-x: hidden;
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Header */
 .header {
+  flex-shrink: 0;
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
   padding: 12px 24px;
@@ -74,6 +79,7 @@ body {
 .header-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* Buttons */
@@ -123,10 +129,12 @@ body {
 
 /* Main Layout */
 .main {
+  flex: 1;
   display: grid;
-  grid-template-columns: 300px 1fr 320px;
-  grid-template-rows: 1fr auto;
-  height: calc(100vh - 61px);
+  grid-template-columns: 300px minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Left Panel */
@@ -134,6 +142,7 @@ body {
   background: var(--bg2);
   border-right: 1px solid var(--border);
   overflow-y: auto;
+  min-height: 0;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -145,6 +154,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px;
+  flex-shrink: 0;
 }
 
 .panel-title {
@@ -221,6 +231,7 @@ body {
   align-items: center;
   padding: 6px 0;
   font-size: 12px;
+  gap: 8px;
 }
 
 .setting-row label {
@@ -302,6 +313,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .viz-container {
@@ -312,11 +324,13 @@ body {
   justify-content: center;
   background: var(--bg);
   overflow: hidden;
+  min-height: 0;
 }
 
 .viz-canvas {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
 .viz-overlay {
@@ -325,6 +339,7 @@ body {
   left: 12px;
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .viz-badge {
@@ -337,12 +352,14 @@ body {
 }
 
 .transport-bar {
+  flex-shrink: 0;
   background: var(--bg2);
   border-top: 1px solid var(--border);
   padding: 10px 20px;
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .transport-btn {
@@ -358,6 +375,7 @@ body {
   justify-content: center;
   font-size: 14px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .transport-btn:hover { background: #243040; }
@@ -370,10 +388,12 @@ body {
   font-weight: 600;
   color: var(--accent);
   min-width: 100px;
+  flex-shrink: 0;
 }
 
 .progress-bar {
   flex: 1;
+  min-width: 80px;
   height: 6px;
   background: var(--bg3);
   border-radius: 3px;
@@ -395,6 +415,7 @@ body {
   gap: 6px;
   font-size: 12px;
   color: var(--text2);
+  flex-shrink: 0;
 }
 
 .volume-control input {
@@ -407,6 +428,7 @@ body {
   background: var(--bg2);
   border-left: 1px solid var(--border);
   overflow-y: auto;
+  min-height: 0;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -481,43 +503,47 @@ body {
   background: var(--bg2);
   border-top: 1px solid var(--border);
   height: 180px;
+  flex-shrink: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
 .timeline-header {
+  flex-shrink: 0;
   padding: 6px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   border-bottom: 1px solid var(--border);
   font-size: 11px;
   color: var(--text2);
+  flex-wrap: wrap;
 }
 
 .timeline-canvas-wrap {
   flex: 1;
   position: relative;
   overflow: hidden;
+  min-height: 0;
 }
 
 .timeline-canvas {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a4a5a; }
 
 /* Status */
 .status-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  flex-shrink: 0;
   background: var(--bg2);
   border-top: 1px solid var(--border);
   padding: 4px 16px;
@@ -525,7 +551,7 @@ body {
   color: var(--text2);
   display: flex;
   justify-content: space-between;
-  z-index: 100;
+  gap: 8px;
 }
 
 /* Empty state */
@@ -584,6 +610,7 @@ body {
   z-index: 1000;
   align-items: center;
   justify-content: center;
+  padding: 16px;
 }
 
 .modal-overlay.visible {
@@ -596,8 +623,8 @@ body {
   border-radius: 12px;
   padding: 24px;
   max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
+  width: 100%;
+  max-height: 90vh;
   overflow-y: auto;
 }
 
@@ -621,18 +648,40 @@ body {
 /* Responsive */
 @media (max-width: 1200px) {
   .main {
-    grid-template-columns: 260px 1fr 280px;
+    grid-template-columns: 260px minmax(0, 1fr) 280px;
   }
 }
 
 @media (max-width: 900px) {
-  .main {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 400px auto auto;
+  body {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
   }
-  .left-panel, .right-panel {
+  .main {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .left-panel,
+  .right-panel {
     border: none;
     border-bottom: 1px solid var(--border);
+    overflow: visible;
+    max-height: none;
+  }
+  .center-panel {
+    height: 60vh;
+    min-height: 380px;
+    border-bottom: 1px solid var(--border);
+  }
+  .bottom-panel {
+    height: 220px;
+  }
+  .status-bar {
+    position: static;
   }
 }
 
@@ -655,6 +704,7 @@ body {
 .waveform-select {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .wave-btn {
@@ -751,15 +801,15 @@ body {
       </div>
       <div class="setting-row">
         <label>Область X:</label>
-        <input type="number" id="areaX" value="200" min="10" max="2000"> мм
+        <input type="number" id="areaX" value="200" min="10" max="2000">
       </div>
       <div class="setting-row">
         <label>Область Y:</label>
-        <input type="number" id="areaY" value="200" min="10" max="2000"> мм
+        <input type="number" id="areaY" value="200" min="10" max="2000">
       </div>
       <div class="setting-row">
         <label>Область Z:</label>
-        <input type="number" id="areaZ" value="200" min="10" max="2000"> мм
+        <input type="number" id="areaZ" value="200" min="10" max="2000">
       </div>
       <div class="setting-row">
         <label>Мин. нота:</label>
@@ -891,7 +941,7 @@ body {
       G-code для загрузки в контроллер ЧПУ. Каждая нота = движение оси с определённой скоростью подачи (F).
     </p>
     <div class="gcode-preview" id="gcodeFull" style="max-height:400px;"></div>
-    <div style="margin-top:12px; display:flex; gap:8px;">
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn btn-primary" id="btnDownloadGcode">💾 Скачать .gcode</button>
       <button class="btn" id="btnCopyGcode">📋 Копировать</button>
     </div>
@@ -1037,7 +1087,6 @@ async function handleFile(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
     
-    // Check if Tonejs MIDI is loaded
     if (typeof Midi === 'undefined') {
       alert('Библиотека MIDI не загружена. Проверьте интернет-соединение.');
       return;
@@ -1058,7 +1107,6 @@ function parseMidi(midi, fileName) {
   const minNote = parseInt(document.getElementById('minNote').value);
   const maxNote = parseInt(document.getElementById('maxNote').value);
   
-  // Collect all notes from all tracks
   let allNotes = [];
   midi.tracks.forEach((track, ti) => {
     track.notes.forEach(note => {
@@ -1076,17 +1124,13 @@ function parseMidi(midi, fileName) {
     });
   });
   
-  // Sort by start time
   allNotes.sort((a, b) => a.start - b.start);
-  
-  // Assign axes (max 3 simultaneous)
   assignAxes(allNotes);
   
   state.notes = allNotes;
   state.totalTime = allNotes.length > 0 ? 
     Math.max(...allNotes.map(n => n.start + n.duration)) : 0;
   
-  // Update UI
   document.getElementById('fileName').textContent = fileName;
   document.getElementById('fileDuration').textContent = state.totalTime.toFixed(1) + 's';
   document.getElementById('fileNotes').textContent = allNotes.length;
@@ -1110,31 +1154,22 @@ function parseMidi(midi, fileName) {
   document.getElementById('timelineInfo').textContent = 
     `${allNotes.length} нот | ${state.totalTime.toFixed(1)}s | ${state.tempo} BPM`;
   
-  // Generate G-code
   generateGcode();
-  
-  // Update note list
   updateNoteList();
-  
-  // Draw timeline
   drawTimeline();
   
   document.getElementById('statusLeft').textContent = `Загружено: ${fileName} | ${allNotes.length} нот`;
 }
 
 function assignAxes(notes) {
-  // For each note, assign to one of 3 axes
-  // Strategy: round-robin based on pitch, or based on availability
-  const axisEndTimes = [0, 0, 0]; // when each axis becomes free
+  const axisEndTimes = [0, 0, 0];
   
   notes.forEach(note => {
-    // Find the axis that is free earliest, prefer axis that matches pitch range
     let bestAxis = 0;
     let bestTime = Infinity;
     
     for (let i = 0; i < 3; i++) {
       if (axisEndTimes[i] <= note.start + 0.001) {
-        // This axis is free
         bestAxis = i;
         bestTime = axisEndTimes[i];
         break;
@@ -1145,9 +1180,7 @@ function assignAxes(notes) {
       }
     }
     
-    // Distribute based on pitch for visual variety
     const pitchClass = note.midi % 3;
-    // Try to use pitch class as axis if available
     if (axisEndTimes[pitchClass] <= note.start + 0.001) {
       bestAxis = pitchClass;
     }
@@ -1164,7 +1197,6 @@ function updateNoteList() {
     return;
   }
   
-  // Show first 50 notes
   const showNotes = state.notes.slice(0, 50);
   const axisClasses = ['x', 'y', 'z'];
   
@@ -1206,23 +1238,17 @@ function generateGcode() {
   
   state.notes.forEach((note, idx) => {
     const axis = axisNames[note.axis];
-    const feedRate = Math.round(note.freq * stepsPerMm / 10); // scale to reasonable feed rate
+    const feedRate = Math.round(note.freq * stepsPerMm / 10);
     
-    // Calculate target position within area
-    // Map note pitch to position within the axis range
     const minNote = parseInt(document.getElementById('minNote').value);
     const maxNote = parseInt(document.getElementById('maxNote').value);
     const noteRatio = (note.midi - minNote) / (maxNote - minNote);
     
-    // Alternate direction for movement
     const target = noteRatio * area[axisNames.indexOf(axis)];
     
-    // Move to produce sound at this frequency
-    // The feed rate F determines the step frequency = sound frequency
     const distance = Math.abs(target - positions[note.axis]);
-    const moveDistance = Math.max(distance, 1); // minimum 1mm move
+    const moveDistance = Math.max(distance, 1);
     
-    // Alternate direction
     const direction = (idx % 2 === 0) ? 1 : -1;
     const newTarget = Math.min(Math.max(
       positions[note.axis] + direction * moveDistance, 
@@ -1242,7 +1268,6 @@ function generateGcode() {
   
   state.gcodeLines = lines;
   
-  // Preview (first 30 lines)
   const preview = lines.slice(0, 30).map(line => {
     if (line.startsWith(';')) return line;
     return line.replace(/([GFM]\d+)/g, '<span class="cmd">$1</span>')
@@ -1322,10 +1347,8 @@ function playbackLoop() {
     return;
   }
   
-  // Process notes at current time
   processNotesAtTime(state.currentTime);
   
-  // Update UI
   updateProgress();
   updateAxisDisplay();
   updateActiveNoteList();
@@ -1347,26 +1370,21 @@ function processNotesAtTime(time) {
     const axis = note.axis;
     
     if (time >= note.start && time < noteEnd) {
-      // Note is active
       if (state.activeNotes[axis] !== note) {
-        // Note on
         state.activeNotes[axis] = note;
         playNoteOn(axis, note.freq);
         
-        // Move axis
         const minNote = parseInt(document.getElementById('minNote').value);
         const maxNote = parseInt(document.getElementById('maxNote').value);
         const ratio = (note.midi - minNote) / (maxNote - minNote);
         state.axisTargets[axis] = ratio * area[axisNames[axis].toLowerCase()];
       }
     } else if (state.activeNotes[axis] === note) {
-      // Note off
       state.activeNotes[axis] = null;
       playNoteOff(axis);
     }
   });
   
-  // Animate axis positions toward targets
   for (let i = 0; i < 3; i++) {
     const diff = state.axisTargets[i] - state.axisPositions[i];
     state.axisPositions[i] += diff * 0.15;
@@ -1400,7 +1418,7 @@ function updateAxisDisplay() {
     if (note) {
       noteEl.textContent = `${note.name} (${note.freq.toFixed(0)}Hz)`;
       const pct = (state.axisPositions[i] / area[axisNames[i].toLowerCase()]) * 100;
-      barEl.style.width = pct + '%';
+      barEl.style.width = Math.max(0, Math.min(100, pct)) + '%';
     } else {
       noteEl.textContent = '—';
       barEl.style.width = '0%';
@@ -1412,7 +1430,6 @@ function updateAxisDisplay() {
 }
 
 function updateActiveNoteList() {
-  // Highlight active notes in the list
   const items = document.querySelectorAll('.note-item');
   items.forEach(item => {
     const idx = parseInt(item.dataset.idx);
@@ -1431,20 +1448,25 @@ const vizCtx = vizCanvas.getContext('2d');
 
 function resizeVizCanvas() {
   const rect = vizCanvas.parentElement.getBoundingClientRect();
-  vizCanvas.width = rect.width * window.devicePixelRatio;
-  vizCanvas.height = rect.height * window.devicePixelRatio;
-  vizCanvas.style.width = rect.width + 'px';
-  vizCanvas.style.height = rect.height + 'px';
-  vizCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  vizCanvas.width = Math.floor(w * dpr);
+  vizCanvas.height = Math.floor(h * dpr);
+  vizCanvas.style.width = w + 'px';
+  vizCanvas.style.height = h + 'px';
+  // ВАЖНО: setTransform вместо scale — не накапливает трансформацию
+  vizCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 function drawVisualization() {
   const w = vizCanvas.width / window.devicePixelRatio;
   const h = vizCanvas.height / window.devicePixelRatio;
   
+  if (w <= 0 || h <= 0) return;
+  
   vizCtx.clearRect(0, 0, w, h);
   
-  // Background grid
   const gridSize = 40;
   vizCtx.strokeStyle = 'rgba(42,52,68,0.5)';
   vizCtx.lineWidth = 0.5;
@@ -1462,17 +1484,14 @@ function drawVisualization() {
     vizCtx.stroke();
   }
   
-  // Draw work area (isometric-ish view)
   const cx = w / 2;
   const cy = h / 2;
   const scale = Math.min(w, h) * 0.35;
   
-  // Area box
   vizCtx.strokeStyle = 'rgba(42,52,68,0.8)';
   vizCtx.lineWidth = 1;
   vizCtx.strokeRect(cx - scale/2, cy - scale/2, scale, scale);
   
-  // Axis labels
   vizCtx.font = '11px JetBrains Mono';
   vizCtx.fillStyle = '#ff6b4a';
   vizCtx.fillText('X →', cx + scale/2 + 8, cy + 4);
@@ -1481,11 +1500,10 @@ function drawVisualization() {
   vizCtx.fillStyle = '#4a9eff';
   vizCtx.fillText('Z', cx - scale/2 - 20, cy - scale/2 + 4);
   
-  // Draw axis positions as moving elements
   const area = {
-    x: parseFloat(document.getElementById('areaX').value),
-    y: parseFloat(document.getElementById('areaY').value),
-    z: parseFloat(document.getElementById('areaZ').value)
+    x: parseFloat(document.getElementById('areaX').value) || 200,
+    y: parseFloat(document.getElementById('areaY').value) || 200,
+    z: parseFloat(document.getElementById('areaZ').value) || 200
   };
   
   const colors = ['#ff6b4a', '#4aff8b', '#4a9eff'];
@@ -1495,25 +1513,22 @@ function drawVisualization() {
     const note = state.activeNotes[i];
     const posRatio = state.axisPositions[i] / area[axisLabels[i].toLowerCase()];
     
-    // Position on the visualization
     let px, py;
-    if (i === 0) { // X axis - horizontal
+    if (i === 0) {
       px = cx - scale/2 + posRatio * scale;
       py = cy - scale/2 - 20;
-    } else if (i === 1) { // Y axis - vertical
+    } else if (i === 1) {
       px = cx + scale/2 + 20;
       py = cy - scale/2 + posRatio * scale;
-    } else { // Z axis - diagonal
+    } else {
       px = cx - scale/2 - 20;
       py = cy - scale/2 + posRatio * scale;
     }
     
-    // Draw trail
     if (note) {
       const freq = note.freq;
       const amplitude = 3 + (freq / 200);
       
-      // Wave pattern around the position
       vizCtx.strokeStyle = colors[i];
       vizCtx.lineWidth = 2;
       vizCtx.globalAlpha = 0.6;
@@ -1529,7 +1544,6 @@ function drawVisualization() {
       vizCtx.globalAlpha = 1;
     }
     
-    // Draw position indicator
     const size = note ? 12 : 8;
     vizCtx.fillStyle = colors[i];
     vizCtx.globalAlpha = note ? 1 : 0.4;
@@ -1538,7 +1552,6 @@ function drawVisualization() {
     vizCtx.arc(px, py, size, 0, Math.PI * 2);
     vizCtx.fill();
     
-    // Glow effect when active
     if (note) {
       vizCtx.globalAlpha = 0.2;
       vizCtx.beginPath();
@@ -1548,7 +1561,6 @@ function drawVisualization() {
     
     vizCtx.globalAlpha = 1;
     
-    // Label
     vizCtx.fillStyle = colors[i];
     vizCtx.font = 'bold 10px JetBrains Mono';
     vizCtx.fillText(axisLabels[i], px - 3, py - size - 5);
@@ -1560,7 +1572,6 @@ function drawVisualization() {
     }
   }
   
-  // Center crosshair
   vizCtx.strokeStyle = 'rgba(255,255,255,0.1)';
   vizCtx.lineWidth = 1;
   vizCtx.setLineDash([4, 4]);
@@ -1572,7 +1583,6 @@ function drawVisualization() {
   vizCtx.stroke();
   vizCtx.setLineDash([]);
   
-  // Info text
   vizCtx.fillStyle = 'rgba(122,134,148,0.6)';
   vizCtx.font = '10px JetBrains Mono';
   vizCtx.fillText(`Область: ${area.x}×${area.y}×${area.z} мм`, cx - scale/2, cy + scale/2 + 30);
@@ -1585,16 +1595,22 @@ const timelineCtx = timelineCanvas.getContext('2d');
 
 function resizeTimelineCanvas() {
   const rect = timelineCanvas.parentElement.getBoundingClientRect();
-  timelineCanvas.width = rect.width * window.devicePixelRatio;
-  timelineCanvas.height = rect.height * window.devicePixelRatio;
-  timelineCanvas.style.width = rect.width + 'px';
-  timelineCanvas.style.height = rect.height + 'px';
-  timelineCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  timelineCanvas.width = Math.floor(w * dpr);
+  timelineCanvas.height = Math.floor(h * dpr);
+  timelineCanvas.style.width = w + 'px';
+  timelineCanvas.style.height = h + 'px';
+  // ВАЖНО: setTransform вместо scale — не накапливает трансформацию
+  timelineCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 function drawTimeline() {
   const w = timelineCanvas.width / window.devicePixelRatio;
   const h = timelineCanvas.height / window.devicePixelRatio;
+  
+  if (w <= 0 || h <= 0) return;
   
   timelineCtx.clearRect(0, 0, w, h);
   
@@ -1617,10 +1633,11 @@ function drawTimeline() {
   const plotW = w - leftMargin - 10;
   const plotH = h - topMargin - bottomMargin;
   
+  if (plotW <= 0 || plotH <= 0) return;
+  
   const noteH = plotH / noteRange;
   const timeScale = plotW / Math.max(state.totalTime, 1);
   
-  // Draw piano keys on left
   for (let n = minNote; n <= maxNote; n++) {
     const y = topMargin + (maxNote - n) * noteH;
     const isBlack = [1,3,6,8,10].includes(n % 12);
@@ -1628,7 +1645,7 @@ function drawTimeline() {
     timelineCtx.fillStyle = isBlack ? 'rgba(20,25,35,0.8)' : 'rgba(30,38,50,0.5)';
     timelineCtx.fillRect(0, y, leftMargin - 2, noteH);
     
-    if (n % 12 === 0) { // C notes
+    if (n % 12 === 0) {
       timelineCtx.fillStyle = 'rgba(122,134,148,0.6)';
       timelineCtx.font = '8px JetBrains Mono';
       timelineCtx.fillText(midiToName(n), 4, y + noteH - 2);
@@ -1642,7 +1659,6 @@ function drawTimeline() {
     }
   }
   
-  // Draw time grid
   const timeStep = state.totalTime > 30 ? 5 : state.totalTime > 10 ? 2 : 1;
   timelineCtx.strokeStyle = 'rgba(42,52,68,0.4)';
   timelineCtx.lineWidth = 0.5;
@@ -1658,7 +1674,6 @@ function drawTimeline() {
     timelineCtx.fillText(t + 's', x + 2, topMargin + plotH + 14);
   }
   
-  // Draw notes
   const colors = ['#ff6b4a', '#4aff8b', '#4a9eff'];
   
   state.notes.forEach(note => {
@@ -1688,7 +1703,6 @@ function drawTimeline() {
     timelineCtx.globalAlpha = 1;
   });
   
-  // Draw playhead
   if (state.isPlaying || state.currentTime > 0) {
     const px = leftMargin + state.currentTime * timeScale;
     timelineCtx.strokeStyle = '#ff9f43';
@@ -1698,7 +1712,6 @@ function drawTimeline() {
     timelineCtx.lineTo(px, topMargin + plotH);
     timelineCtx.stroke();
     
-    // Playhead triangle
     timelineCtx.fillStyle = '#ff9f43';
     timelineCtx.beginPath();
     timelineCtx.moveTo(px - 5, topMargin);
@@ -1721,7 +1734,7 @@ document.getElementById('btnStop').addEventListener('click', stopPlayback);
 
 document.getElementById('progressBar').addEventListener('click', (e) => {
   if (state.totalTime === 0) return;
-  const rect = e.target.getBoundingClientRect();
+  const rect = e.currentTarget.getBoundingClientRect();
   const pct = (e.clientX - rect.left) / rect.width;
   const newTime = pct * state.totalTime;
   
@@ -1732,7 +1745,6 @@ document.getElementById('progressBar').addEventListener('click', (e) => {
     state.playStartTime = performance.now() / 1000 - newTime / state.speed;
   }
   
-  // Reset active notes
   state.activeNotes = [null, null, null];
   stopAllAudio();
   
@@ -1740,7 +1752,6 @@ document.getElementById('progressBar').addEventListener('click', (e) => {
   drawTimeline();
 });
 
-// Speed control
 document.getElementById('speedRange').addEventListener('input', (e) => {
   state.speed = e.target.value / 100;
   document.getElementById('speedValue').textContent = e.target.value + '%';
@@ -1750,7 +1761,6 @@ document.getElementById('speedRange').addEventListener('input', (e) => {
   }
 });
 
-// Volume
 document.getElementById('volumeRange').addEventListener('input', (e) => {
   state.volume = e.target.value / 100;
 });
@@ -1760,7 +1770,6 @@ document.getElementById('masterVolume').addEventListener('input', (e) => {
   document.getElementById('volumeRange').value = e.target.value;
 });
 
-// Waveform
 document.querySelectorAll('.wave-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active'));
@@ -1769,15 +1778,10 @@ document.querySelectorAll('.wave-btn').forEach(btn => {
   });
 });
 
-// Settings changes
 ['stepsPerMm', 'areaX', 'areaY', 'areaZ', 'minNote', 'maxNote'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => {
     state.stepsPerMm = parseInt(document.getElementById('stepsPerMm').value);
     if (state.notes.length > 0) {
-      // Reassign axes with new range
-      const minNote = parseInt(document.getElementById('minNote').value);
-      const maxNote = parseInt(document.getElementById('maxNote').value);
-      
       state.notes.forEach(n => {
         n.freq = midiToFreq(n.midi);
         n.name = midiToName(n.midi);
@@ -1791,7 +1795,6 @@ document.querySelectorAll('.wave-btn').forEach(btn => {
   });
 });
 
-// Export G-code
 document.getElementById('btnExportGcode').addEventListener('click', () => {
   document.getElementById('gcodeModal').classList.add('visible');
 });
@@ -1821,7 +1824,6 @@ document.getElementById('btnCopyGcode').addEventListener('click', () => {
   });
 });
 
-// Export Notes
 document.getElementById('btnExportNotes').addEventListener('click', () => {
   let csv = 'Note,MIDI,Frequency(Hz),Start(s),Duration(s),Axis,FeedRate\n';
   state.notes.forEach(n => {
@@ -1840,38 +1842,35 @@ document.getElementById('btnExportNotes').addEventListener('click', () => {
 
 // Demo melody
 document.getElementById('btnDemo').addEventListener('click', () => {
-  // Generate a simple demo melody (Twinkle Twinkle Little Star)
   const melody = [
-    { midi: 60, start: 0, duration: 0.5 },    // C4
-    { midi: 60, start: 0.5, duration: 0.5 },   // C4
-    { midi: 67, start: 1.0, duration: 0.5 },   // G4
-    { midi: 67, start: 1.5, duration: 0.5 },   // G4
-    { midi: 69, start: 2.0, duration: 0.5 },   // A4
-    { midi: 69, start: 2.5, duration: 0.5 },   // A4
-    { midi: 67, start: 3.0, duration: 1.0 },   // G4
-    { midi: 65, start: 4.0, duration: 0.5 },   // F4
-    { midi: 65, start: 4.5, duration: 0.5 },   // F4
-    { midi: 64, start: 5.0, duration: 0.5 },   // E4
-    { midi: 64, start: 5.5, duration: 0.5 },   // E4
-    { midi: 62, start: 6.0, duration: 0.5 },   // D4
-    { midi: 62, start: 6.5, duration: 0.5 },   // D4
-    { midi: 60, start: 7.0, duration: 1.0 },   // C4
-    // Second phrase
-    { midi: 67, start: 8.0, duration: 0.5 },   // G4
-    { midi: 67, start: 8.5, duration: 0.5 },   // G4
-    { midi: 65, start: 9.0, duration: 0.5 },   // F4
-    { midi: 65, start: 9.5, duration: 0.5 },   // F4
-    { midi: 64, start: 10.0, duration: 0.5 },  // E4
-    { midi: 64, start: 10.5, duration: 0.5 },  // E4
-    { midi: 62, start: 11.0, duration: 1.0 },  // D4
-    { midi: 67, start: 12.0, duration: 0.5 },  // G4
-    { midi: 67, start: 12.5, duration: 0.5 },  // G4
-    { midi: 65, start: 13.0, duration: 0.5 },  // F4
-    { midi: 65, start: 13.5, duration: 0.5 },  // F4
-    { midi: 64, start: 14.0, duration: 0.5 },  // E4
-    { midi: 64, start: 14.5, duration: 0.5 },  // E4
-    { midi: 62, start: 15.0, duration: 1.0 },  // D4
-    // Third phrase
+    { midi: 60, start: 0, duration: 0.5 },
+    { midi: 60, start: 0.5, duration: 0.5 },
+    { midi: 67, start: 1.0, duration: 0.5 },
+    { midi: 67, start: 1.5, duration: 0.5 },
+    { midi: 69, start: 2.0, duration: 0.5 },
+    { midi: 69, start: 2.5, duration: 0.5 },
+    { midi: 67, start: 3.0, duration: 1.0 },
+    { midi: 65, start: 4.0, duration: 0.5 },
+    { midi: 65, start: 4.5, duration: 0.5 },
+    { midi: 64, start: 5.0, duration: 0.5 },
+    { midi: 64, start: 5.5, duration: 0.5 },
+    { midi: 62, start: 6.0, duration: 0.5 },
+    { midi: 62, start: 6.5, duration: 0.5 },
+    { midi: 60, start: 7.0, duration: 1.0 },
+    { midi: 67, start: 8.0, duration: 0.5 },
+    { midi: 67, start: 8.5, duration: 0.5 },
+    { midi: 65, start: 9.0, duration: 0.5 },
+    { midi: 65, start: 9.5, duration: 0.5 },
+    { midi: 64, start: 10.0, duration: 0.5 },
+    { midi: 64, start: 10.5, duration: 0.5 },
+    { midi: 62, start: 11.0, duration: 1.0 },
+    { midi: 67, start: 12.0, duration: 0.5 },
+    { midi: 67, start: 12.5, duration: 0.5 },
+    { midi: 65, start: 13.0, duration: 0.5 },
+    { midi: 65, start: 13.5, duration: 0.5 },
+    { midi: 64, start: 14.0, duration: 0.5 },
+    { midi: 64, start: 14.5, duration: 0.5 },
+    { midi: 62, start: 15.0, duration: 1.0 },
     { midi: 60, start: 16.0, duration: 0.5 },
     { midi: 60, start: 16.5, duration: 0.5 },
     { midi: 67, start: 17.0, duration: 0.5 },
@@ -1905,7 +1904,6 @@ document.getElementById('btnDemo').addEventListener('click', () => {
   state.tempo = 120;
   state.midiData = { demo: true };
   
-  // Update UI
   document.getElementById('fileName').textContent = 'Демо: Twinkle Twinkle';
   document.getElementById('fileDuration').textContent = '24.0s';
   document.getElementById('fileNotes').textContent = notes.length;
@@ -1946,6 +1944,8 @@ drawTimeline();
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space') {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button') return;
     e.preventDefault();
     if (state.isPlaying) {
       pausePlayback();
@@ -1959,7 +1959,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Click on modal overlay to close
 document.getElementById('gcodeModal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('gcodeModal')) {
     document.getElementById('gcodeModal').classList.remove('visible');
@@ -1987,4 +1986,3 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 </script>
 </body>
 </html>
-
