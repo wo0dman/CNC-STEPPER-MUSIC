@@ -525,11 +525,14 @@ input[type=range]{width:100%;accent-color:var(--ac);height:4px;cursor:pointer;ba
     </div>
 
     <div class="sec">
-      <div class="sec-h">📝 G-code превью<span class="sec-t"><button class="btn btn-s" id="bGc2">Открыть</button></span><span class="ch">▼</span></div>
-      <div class="sec-b">
-        <div class="gp" id="gP">; Добавьте ноты или загрузите MIDI</div>
-      </div>
-    </div>
+  <div class="sec-h">📝 G-code превью<span class="sec-t">
+    <button class="btn btn-s on" id="bCmnt" title="Показывать комментарии в G-code">💬 Комм.</button>
+    <button class="btn btn-s" id="bGc2">Открыть</button>
+  </span><span class="ch">▼</span></div>
+  <div class="sec-b">
+    <div class="gp" id="gP">; Добавьте ноты или загрузите MIDI</div>
+  </div>
+</div>
 
   </div>
 
@@ -666,7 +669,9 @@ const S={
   simPos:[100,100,100], simDir:[1,1,1],
   ac:null, osc:[null,null,null], gn:[null,null,null],
   gcode:[], gTxt:'', cTxt:'', tTxt:'', moves:0, mF:0, travel:[0,0,0], muted:0,
+  gcodeComments:true,   // ← НОВАЯ СТРОКА: показывать комментарии в G-code
   lastFrame:0
+  
 };
 const motorHz =m=>S.c4*Math.pow(2,(m-60)/12);
 const motorMmS=m=>motorHz(m)/(S.spmm||1);
@@ -1086,11 +1091,19 @@ function recomputeTotals(){
 /* =====================================================================
    G-CODE
    ===================================================================== */
+function getGcodeLines(){
+  if(S.gcodeComments) return S.gcode;
+  return S.gcode.map(l=>{
+    const i=l.indexOf(';');
+    return i>=0 ? l.substring(0,i).trimEnd() : l;
+  }).filter(l=>l.length>0);
+}
+
 function buildGcode(){
   const L=[], spmm=S.spmm||1, lim=S.area.slice();
   const p0=[lim[0]/2,lim[1]/2,lim[2]/2];
-  const pos=p0.slice(), dir=[1,1,1], tr=[0,0,0];
-  let maxF=0, mv=0, warnF=0;
+  const tr=[0,0,0];
+  let maxF=0, mv=0, warnF=0, bigDrift=false;
 
   L.push('%');
   L.push('; ================================================================');
@@ -1104,27 +1117,32 @@ function buildGcode(){
   L.push(';   Подача :  F[мм/мин] = Hz * 60 / ' + spmm);
   L.push(';   Шаг/мм : '+spmm+'      Область: X'+lim[0]+' Y'+lim[1]+' Z'+lim[2]+' мм');
   L.push(';   Полифония: до 3 нот (X/Y/Z одновременно)');
-  L.push(';   Для хода нескольких осей  F = 60*|вектор|/dt , что даёт');
-  L.push(';   на каждой оси ровно требуемую частоту шагов (Grbl/LinuxCNC).');
-  L.push(';   Движение внутри области — «пинг-понг» с отражением от границ.');
+  L.push(';   РЕВЕРС: каждая нота чередует направление: +, −, +, − ...');
+  L.push(';   Это удерживает мотор в пределах области без отскоков от границ.');
+  L.push(';   Режим координат: G91 (относительные, смещения от текущей точки).');
   L.push('; ================================================================');
   L.push('');
   L.push('G21          ; миллиметры');
-  L.push('G90          ; абсолютные координаты');
+  L.push('G90          ; абсолютные координаты (только для старта)');
   L.push('G94          ; подача мм/мин');
   L.push('G17          ; плоскость XY');
   L.push('M5           ; шпиндель выкл');
   L.push('M9           ; СОЖ выкл');
   L.push('G0 X'+p0[0].toFixed(3)+' Y'+p0[1].toFixed(3)+' Z'+p0[2].toFixed(3)+'   ; старт — центр области');
+  L.push('G91          ; ОТНОСИТЕЛЬНЫЕ координаты (режим реверса)');
   L.push('');
 
   if(!S.notes.length){
     L.push('; НОТ НЕТ — программа пустая');
-    L.push('M2'); L.push('%');
-    S.gcode=L; S.gTxt=L.join('\n'); S.moves=0; S.mF=0; S.travel=[0,0,0];
+    L.push('G90          ; возврат в абсолютный режим');
+    L.push('M2           ; конец программы');
+    L.push('%');
+    S.gcode=L; S.gTxt=getGcodeLines().join('\n');
+    S.moves=0; S.mF=0; S.travel=[0,0,0]; S.warnF=0;
     updGPre(); buildCsv(); buildTab(); return;
   }
 
+  /* --- временные границы --- */
   const ts=new Set([0]);
   S.notes.forEach(n=>{ts.add(r3(n.start)); ts.add(r3(n.start+n.dur));});
   let ar=[...ts].sort((a,b)=>a-b);
@@ -1132,6 +1150,11 @@ function buildGcode(){
   for(let i=1;i<ar.length;i++) if(ar[i]-mg[mg.length-1]>=.008) mg.push(ar[i]);
   ar=mg;
   const EPS=1e-6;
+
+  /* --- состояние реверса --- */
+  const dir=[-1,-1,-1];              // -1 → первый note flip'ом даст +1
+  const lastNote=[null,null,null];
+  const cumulative=[0,0,0];
 
   for(let i=0;i<ar.length-1;i++){
     const t0=ar[i], t1=ar[i+1], dtF=t1-t0;
@@ -1147,72 +1170,61 @@ function buildGcode(){
     L.push('; -- t '+t0.toFixed(3)+' .. '+t1.toFixed(3)+' с  (dt '+dtF.toFixed(3)+' с) --');
     for(let a=0;a<3;a++) if(act[a])
       L.push(';    '+AX[a]+': '+m2n(act[a].midi)+' (MIDI '+act[a].midi+')  '+
-             motorHz(act[a].midi).toFixed(1)+' шаг/с  ->  F'+motorFeed(act[a].midi).toFixed(0)+' мм/мин  ход '+(motorMmS(act[a].midi)*dtF).toFixed(3)+' мм');
+             motorHz(act[a].midi).toFixed(1)+' шаг/с');
 
-    let rem=dtF, guard=0;
-    while(rem>EPS && guard++<400){
-      let sub=rem;
-      for(let a=0;a<3;a++){
-        if(!act[a])continue;
-        const v=motorMmS(act[a].midi); if(v<=0)continue;
-        const av=dir[a]>0?(lim[a]-pos[a]):pos[a];
-        const th=av/v;
-        if(th<sub-EPS) sub=Math.max(th,0);
-      }
-      if(sub<=EPS){
-        let flipped=false;
-        for(let a=0;a<3;a++){
-          if(!act[a])continue;
-          const av=dir[a]>0?(lim[a]-pos[a]):pos[a];
-          if(av<=1e-6){dir[a]=-dir[a];flipped=true;}
-        }
-        if(!flipped) break;
-        continue;
-      }
-      const d=[0,0,0];
-      for(let a=0;a<3;a++){
-        if(!act[a])continue;
-        let v=dir[a]*motorMmS(act[a].midi)*sub;
-        if(Math.abs(v)>0&&Math.abs(v)<S.minMove) v=Math.sign(v)*S.minMove;
-        d[a]=v;
-      }
-      const np=[pos[0]+d[0],pos[1]+d[1],pos[2]+d[2]];
-      const vec=Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);
-      if(vec>1e-5){
-        const F=Math.round(vec/sub*60);
-        if(F>maxF)maxF=F;
-        let cmd='G1';
-        for(let a=0;a<3;a++) if(Math.abs(d[a])>1e-5) cmd+=' '+AX[a]+np[a].toFixed(3);
-        cmd+=' F'+F;
-        if(F>S.maxFeed){cmd+='   ; ПРЕВЫШЕНИЕ лимита подачи '+S.maxFeed;warnF++;}
-        L.push(cmd); mv++;
-        for(let a=0;a<3;a++) tr[a]+=Math.abs(d[a]);
-      }
-      pos[0]=np[0];pos[1]=np[1];pos[2]=np[2];
-      rem-=sub;
-      if(rem>EPS){
-        for(let a=0;a<3;a++){
-          if(!act[a])continue;
-          const av=dir[a]>0?(lim[a]-pos[a]):pos[a];
-          if(av<=1e-6) dir[a]=-dir[a];
-        }
+    /* Смена направления при старте новой ноты на оси */
+    for(let a=0;a<3;a++){
+      if(act[a] && act[a]!==lastNote[a]){
+        dir[a]*=-1;
+        lastNote[a]=act[a];
       }
     }
+
+    /* Один относительный ход на сегмент */
+    const d=[0,0,0];
+    let vec2=0;
+    for(let a=0;a<3;a++){
+      if(!act[a])continue;
+      d[a]=dir[a]*motorMmS(act[a].midi)*dtF;
+      vec2+=d[a]*d[a];
+    }
+    const vec=Math.sqrt(vec2);
+    if(vec<1e-5) continue;
+
+    const F=Math.round(vec/dtF*60);
+    if(F>maxF) maxF=F;
+    let cmd='G1';
+    for(let a=0;a<3;a++) if(Math.abs(d[a])>1e-5) cmd+=' '+AX[a]+d[a].toFixed(3);
+    cmd+=' F'+F;
+    if(F>S.maxFeed){cmd+='   ; ПРЕВЫШЕНИЕ лимита подачи '+S.maxFeed;warnF++;}
+    L.push(cmd); mv++;
+    for(let a=0;a<3;a++){ tr[a]+=Math.abs(d[a]); cumulative[a]+=d[a]; }
   }
 
+  /* --- возврат в центр --- */
   L.push('');
-  L.push('; -- возврат в исходную точку --');
+  L.push('; -- возврат в центр области --');
+  L.push('G90          ; возврат в абсолютный режим');
   L.push('G0 X'+p0[0].toFixed(3)+' Y'+p0[1].toFixed(3)+' Z'+p0[2].toFixed(3));
+
+  /* --- проверка дрейфа --- */
+  const drift=Math.max(Math.abs(cumulative[0]),Math.abs(cumulative[1]),Math.abs(cumulative[2]));
+  const halfRange=Math.min(...lim)/2;
+  if(drift>halfRange-5) bigDrift=true;
+
   L.push('; ----------------------------------------------------------------');
   L.push('; Кадров G1: '+mv+'   Макс. подача: F'+maxF+' мм/мин');
   L.push('; Полный ход: X '+tr[0].toFixed(1)+' мм · Y '+tr[1].toFixed(1)+' мм · Z '+tr[2].toFixed(1)+' мм');
+  L.push('; Накопленное смещение: X '+cumulative[0].toFixed(2)+' мм · Y '+cumulative[1].toFixed(2)+' мм · Z '+cumulative[2].toFixed(2)+' мм');
+  if(bigDrift) L.push('; ВНИМАНИЕ: возможен дрейф за пределы области! Скорректируйте C4 или длительности нот.');
   if(warnF) L.push('; ВНИМАНИЕ: '+warnF+' кадров превышают установленный лимит подачи!');
   if(S.muted) L.push('; ВНИМАНИЕ: '+S.muted+' нот подавлено (полифония > 3) — см. редактор');
   L.push('; ================================================================');
   L.push('M2           ; конец программы');
   L.push('%');
 
-  S.gcode=L; S.gTxt=L.join('\n'); S.moves=mv; S.mF=maxF; S.travel=tr; S.warnF=warnF;
+  S.gcode=L; S.gTxt=getGcodeLines().join('\n');
+  S.moves=mv; S.mF=maxF; S.travel=tr; S.warnF=warnF+(bigDrift?1:0);
   updGPre(); updStats(); buildCsv(); buildTab();
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -1757,6 +1769,12 @@ $('bClr').addEventListener('click',clearAll);
 $('bCsv').addEventListener('click',()=>{if(!S.notes.length){toast('Нет нот','wr');return;}buildCsv();openModal('n');});
 $('bGc').addEventListener('click',()=>{buildGcode();openModal('g');});
 $('bGc2').addEventListener('click',()=>{buildGcode();openModal('g');});
+$('bCmnt').addEventListener('click',()=>{
+  S.gcodeComments = !S.gcodeComments;
+  $('bCmnt').classList.toggle('on', S.gcodeComments);
+  buildGcode();
+  toast('Комментарии в G-code ' + (S.gcodeComments?'включены':'отключены'),'ok');
+});
 $('bHelp').addEventListener('click',()=>$('hp').classList.add('on'));
 $('hpX').addEventListener('click',()=>$('hp').classList.remove('on'));
 $('hpOk').addEventListener('click',()=>$('hp').classList.remove('on'));
