@@ -3,1651 +3,1864 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CNC Stepper Music Editor v2.1</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/cyrillic-400-normal.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/cyrillic-500-normal.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/cyrillic-700-normal.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/latin-400-normal.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/latin-700-normal.css">
+<title>CNC Stepper Music Editor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.3.0/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.3.0/700.css">
 <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
+* { margin:0; padding:0; box-sizing:border-box; }
+
 :root{
-  --bg:#0a0e14;--bg2:#111820;--bg3:#1a2230;--bg4:#0d131b;--bg5:#0b1119;
-  --bd:#2a3444;--bd2:#3d4d61;
-  --tx:#c5cdd8;--tx2:#7a8694;--tx3:#4e5c6d;
-  --x:#ff6b4a;--y:#4aff8b;--z:#4a9eff;
-  --ac:#ff9f43;--dg:#ff4757;--ok:#2ed573;
-  --edH:300px;
+  --bg:#0a0e14; --bg2:#111820; --bg3:#1a2230; --bg4:#0d131b;
+  --border:#2a3444; --border2:#3a4a5a;
+  --text:#c5cdd8; --text2:#7a8694;
+  --x:#ff6b4a; --y:#4aff8b; --z:#4a9eff;
+  --accent:#ff9f43; --danger:#ff4757; --success:#2ed573;
+  /* высота нижней панели (piano roll) — меняется ресайзером */
+  --bh:clamp(210px,32vh,340px);
+  --lw:minmax(244px,290px);
+  --rw:minmax(292px,336px);
 }
+
 html,body{height:100%;}
 body{
   font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
-  background:var(--bg);color:var(--tx);overflow:hidden;font-size:12px;
-  -webkit-font-smoothing:antialiased;
+  background:var(--bg); color:var(--text); overflow:hidden;
 }
 
-/* ============ HEADER ============ */
-.hdr{
-  height:50px;background:linear-gradient(180deg,#151d28,#111820);
-  border-bottom:1px solid var(--bd);padding:0 14px;
-  display:flex;align-items:center;gap:14px;flex-shrink:0;
+/* ---------- HEADER ---------- */
+.header{
+  height:52px; background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:0 14px; display:flex; align-items:center; justify-content:space-between; gap:14px;
+  flex-shrink:0;
 }
-.lg{display:flex;align-items:center;gap:10px;min-width:0;}
-.lg-i{
-  width:30px;height:30px;border-radius:7px;flex-shrink:0;
-  background:linear-gradient(135deg,var(--x),var(--y) 55%,var(--z));
-  display:flex;align-items:center;justify-content:center;font-size:15px;color:#08101a;
-  box-shadow:0 0 14px rgba(255,159,67,.25);
+.logo{display:flex;align-items:center;gap:10px;min-width:0;}
+.logo-icon{
+  width:32px;height:32px;border-radius:7px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--x),var(--y),var(--z));
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:#08101a;
 }
-.lg-t{font-size:12.5px;font-weight:700;letter-spacing:1.2px;white-space:nowrap;}
-.lg-t b{color:var(--ac);font-weight:700;}
-.lg-s{font-size:8.5px;color:var(--tx2);letter-spacing:.4px;white-space:nowrap;margin-top:1px;}
-.hdr-a{margin-left:auto;display:flex;gap:5px;align-items:center;flex-wrap:nowrap;}
-.hdr-sep{width:1px;height:22px;background:var(--bd);margin:0 3px;}
+.logo-text{font-size:13px;font-weight:700;letter-spacing:1.4px;white-space:nowrap;}
+.logo-text span{color:var(--accent);}
+.logo-sub{font-size:9px;color:var(--text2);letter-spacing:.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.header-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.hsep{width:1px;height:22px;background:var(--border);margin:0 2px;}
 
-/* ============ BUTTONS ============ */
+/* ---------- BUTTONS ---------- */
 .btn{
-  padding:6px 11px;border:1px solid var(--bd);border-radius:6px;background:var(--bg3);
-  color:var(--tx);font-family:inherit;font-size:10.5px;font-weight:500;cursor:pointer;
-  transition:background .13s,border-color .13s,transform .06s;
-  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;line-height:1.2;
+  padding:7px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);
+  color:var(--text);font-family:inherit;font-size:11px;cursor:pointer;transition:.15s;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
 }
-.btn:hover{background:#233041;border-color:var(--bd2);}
+.btn:hover{background:#243040;border-color:var(--border2);}
 .btn:active{transform:translateY(1px);}
-.btn:disabled{opacity:.32;cursor:not-allowed;transform:none;}
-.btn-p{background:var(--ac);color:#180d00;border-color:#c47c2c;font-weight:700;}
-.btn-p:hover{background:#ffb45c;border-color:#ffb45c;}
-.btn-d{border-color:rgba(255,71,87,.45);color:var(--dg);background:rgba(255,71,87,.07);}
-.btn-d:hover{background:rgba(255,71,87,.16);border-color:var(--dg);}
-.btn-g{border-color:rgba(46,213,115,.4);color:var(--ok);background:rgba(46,213,115,.07);}
-.btn-g:hover{background:rgba(46,213,115,.16);}
-.btn-s{padding:3px 7px;font-size:9.5px;border-radius:4px;}
-.btn.on{background:rgba(255,159,67,.16);border-color:var(--ac);color:var(--ac);}
-.icob{width:28px;height:28px;padding:0;justify-content:center;font-size:13px;}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#160c00;border-color:var(--accent);font-weight:600;}
+.btn-primary:hover{background:#ffb457;border-color:#ffb457;}
+.btn-icon{padding:7px 9px;font-size:13px;line-height:1;}
+.btn-sm{padding:4px 8px;font-size:10px;border-radius:5px;}
+.btn.active,.btn-icon.active{background:rgba(255,159,67,.16);border-color:var(--accent);color:var(--accent);}
 
-/* ============ LAYOUT ============ */
-.sh{display:flex;flex-direction:column;height:100vh;}
-.mn{
-  flex:1;min-height:0;display:grid;
-  grid-template-columns:280px minmax(0,1fr) 306px;
-  grid-template-rows:minmax(120px,1fr) 5px var(--edH);
+/* ---------- LAYOUT ---------- */
+.shell{display:flex;flex-direction:column;height:100vh;height:100dvh;min-height:460px;}
+.main{
+  flex:1; min-height:0;
+  display:grid;
+  grid-template-columns:var(--lw) minmax(0,1fr) var(--rw);
+  grid-template-rows:minmax(140px,1fr) 6px var(--bh);
+  gap:0;
 }
-.lp{grid-column:1;grid-row:1/4;background:var(--bg2);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;}
-.cp{grid-column:2;grid-row:1/2;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;}
-.rp{grid-column:3;grid-row:1/4;background:var(--bg2);border-left:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;}
-.sp{grid-column:2;grid-row:2/3;background:var(--bd);cursor:ns-resize;position:relative;transition:background .15s;}
-.sp:hover,.sp.act{background:var(--ac);}
-.sp::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:2px;background:rgba(0,0,0,.4);border-radius:1px;}
-.bp{grid-column:2;grid-row:3/4;background:var(--bg2);border-top:1px solid var(--bd);display:flex;flex-direction:column;min-height:0;}
+.left-panel{grid-row:1/2;grid-column:1/2;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden;padding:12px;display:flex;flex-direction:column;gap:12px;}
+.center-panel{grid-row:1/2;grid-column:2/3;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;}
+.right-panel{grid-row:1/2;grid-column:3/4;background:var(--bg2);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;padding:12px;display:flex;flex-direction:column;gap:12px;}
+.row-split{grid-column:1/-1;grid-row:2/3;background:var(--bg2);border-top:1px solid var(--border);cursor:row-resize;position:relative;touch-action:none;}
+.row-split::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:46px;height:2px;border-radius:2px;background:var(--border2);transition:.15s;}
+.row-split:hover::after,.row-split.act::after{background:var(--accent);width:70px;}
+.bottom-panel{grid-column:1/-1;grid-row:3/4;background:var(--bg2);display:flex;flex-direction:column;min-height:0;overflow:hidden;}
 
-/* ============ SECTIONS ============ */
-.sec{border-bottom:1px solid var(--bd);}
-.sec-h{
-  padding:8px 12px;background:rgba(0,0,0,.22);display:flex;align-items:center;gap:6px;
-  font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.3px;color:var(--tx2);
-  cursor:pointer;user-select:none;transition:background .15s;position:sticky;top:0;z-index:5;
-  border-bottom:1px solid transparent;
+body.hide-left .left-panel{display:none;}
+body.hide-left .main{grid-template-columns:minmax(0,1fr) var(--rw);}
+body.hide-left .center-panel{grid-column:1/2;}
+body.hide-left .right-panel{grid-column:2/3;}
+body.hide-right .right-panel{display:none;}
+body.hide-right .main{grid-template-columns:var(--lw) minmax(0,1fr);}
+body.hide-left.hide-right .main{grid-template-columns:minmax(0,1fr);}
+body.hide-left.hide-right .center-panel{grid-column:1/2;}
+
+/* ---------- SECTIONS ---------- */
+.sec{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;}
+.sec-title{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--text2);
+  padding:9px 12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.18);
+  display:flex;align-items:center;gap:6px;
 }
-.sec-h:hover{background:rgba(0,0,0,.35);color:var(--tx);}
-.sec-h .ch{margin-left:auto;font-size:9px;transition:transform .2s;color:var(--tx3);}
-.sec.cl .sec-h .ch{transform:rotate(-90deg);}
-.sec.cl .sec-b{display:none;}
-.sec-b{padding:11px 12px;}
-.sec-t{margin-left:auto;display:flex;gap:4px;}
+.sec-title .spacer{margin-left:auto;}
+.sec-body{padding:12px;}
 
-/* ============ UPLOAD ============ */
-.up{
-  border:2px dashed var(--bd2);border-radius:8px;padding:16px 10px;text-align:center;
-  cursor:pointer;transition:.18s;background:rgba(255,255,255,.012);
+/* ---------- UPLOAD ---------- */
+.upload-area{
+  border:2px dashed var(--border2);border-radius:8px;padding:16px 12px;text-align:center;
+  cursor:pointer;transition:.2s;
 }
-.up:hover{border-color:var(--ac);background:rgba(255,159,67,.05);}
-.up.dg{border-color:var(--ac);background:rgba(255,159,67,.13);transform:scale(1.015);}
-.up-i{font-size:22px;margin-bottom:5px;opacity:.85;}
-.up-t{font-size:9.5px;color:var(--tx2);line-height:1.75;}
-.up-t b{color:var(--ac);}
+.upload-area:hover{border-color:var(--accent);background:rgba(255,159,67,.05);}
+.upload-area.dragover{border-color:var(--accent);background:rgba(255,159,67,.12);transform:scale(1.01);}
+.upload-icon{font-size:24px;margin-bottom:6px;}
+.upload-text{font-size:10px;color:var(--text2);line-height:1.7;}
+.upload-text b{color:var(--accent);}
 
-.kv{display:flex;justify-content:space-between;gap:8px;font-size:10px;padding:2.5px 0;}
-.kv .k{color:var(--tx2);white-space:nowrap;}
-.kv .v{color:var(--tx);font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.kv .v.ok{color:var(--ok);} .kv .v.wr{color:var(--ac);}
+.kv{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;gap:8px;}
+.kv .k{color:var(--text2);white-space:nowrap;}
+.kv .v{color:var(--text);font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;font-size:10.5px;}
-.row>label{color:var(--tx2);white-space:nowrap;}
-.row .vv{color:var(--ac);font-weight:700;font-size:10px;min-width:40px;text-align:right;}
+/* ---------- SETTINGS ROWS ---------- */
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;font-size:11px;}
+.row label{color:var(--text2);white-space:nowrap;}
+.row .val{color:var(--accent);font-weight:600;min-width:52px;text-align:right;font-size:10px;}
 input[type=number],select,input[type=text]{
-  background:var(--bg5);border:1px solid var(--bd);border-radius:5px;color:var(--tx);
-  font-family:inherit;font-size:10.5px;padding:4px 6px;width:100%;min-width:0;
+  background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--text);
+  font-family:inherit;font-size:11px;padding:4px 6px;width:100%;min-width:0;
 }
 input[type=number]{text-align:right;}
-input:focus,select:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 2px rgba(255,159,67,.12);}
-select{cursor:pointer;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--tx2) 50%),linear-gradient(135deg,var(--tx2) 50%,transparent 50%);background-position:calc(100% - 12px) 50%,calc(100% - 8px) 50%;background-size:4px 4px;background-repeat:no-repeat;padding-right:20px;}
-input[type=range]{width:100%;accent-color:var(--ac);height:4px;cursor:pointer;background:transparent;}
-.i-s{width:74px;flex-shrink:0;}
+input[type=checkbox]{width:auto;accent-color:var(--accent);cursor:pointer;}
+input:focus,select:focus{outline:none;border-color:var(--accent);}
+input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointer;}
+.inp-sm{width:78px;flex-shrink:0;}
 
-/* ============ C4 ============ */
-.c4b{
-  background:linear-gradient(140deg,rgba(255,159,67,.13),rgba(255,107,74,.05));
-  border:1px solid rgba(255,159,67,.32);border-radius:8px;padding:11px;margin-bottom:10px;
+/* ---------- C4 REFERENCE ---------- */
+.c4-box{
+  background:linear-gradient(135deg,rgba(255,159,67,.12),rgba(255,107,74,.06));
+  border:1px solid rgba(255,159,67,.35);border-radius:8px;padding:12px;margin-bottom:10px;
 }
-.c4l{font-size:9px;text-transform:uppercase;letter-spacing:1.1px;color:var(--ac);font-weight:700;}
-.c4v{font-size:26px;font-weight:700;color:#fff;line-height:1.05;margin-top:2px;font-variant-numeric:tabular-nums;}
-.c4u{font-size:9px;color:var(--tx2);font-weight:400;margin-left:5px;letter-spacing:.3px;}
-.prst{display:flex;gap:3px;flex-wrap:wrap;margin-top:9px;}
-.fm{
-  font-size:9.5px;color:var(--tx2);line-height:1.7;background:var(--bg5);padding:8px 9px;
-  border-radius:6px;border:1px solid var(--bd);margin-top:9px;
-}
-.fm b{color:var(--ac);font-weight:700;}
-.st{margin-top:9px;border-top:1px solid var(--bd);padding-top:7px;}
-.st-r{display:flex;justify-content:space-between;font-size:9.5px;padding:2px 0;font-variant-numeric:tabular-nums;}
-.st-r .n{color:var(--tx2);} .st-r .s{color:var(--tx);font-weight:500;}
-.st-r.hl{background:rgba(255,159,67,.09);border-radius:3px;}
-.st-r.hl .n,.st-r.hl .s{color:var(--ac);font-weight:700;}
+.c4-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+.c4-label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--accent);font-weight:700;}
+.c4-value{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.c4-unit{font-size:10px;color:var(--text2);margin-left:4px;}
+.presets{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;}
 
-/* ============ AXES ============ */
-.axc{padding:8px 9px;border-radius:6px;background:var(--bg5);margin-bottom:6px;border-left:3px solid var(--bd);transition:border-color .15s;}
-.axc:last-child{margin-bottom:0;}
-.axc.a0{border-left-color:var(--x);} .axc.a1{border-left-color:var(--y);} .axc.a2{border-left-color:var(--z);}
-.axc.live{background:#121c26;}
-.ax-h{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:5px;}
-.ax-n{font-weight:700;font-size:10.5px;}
-.axc.a0 .ax-n{color:var(--x);} .axc.a1 .ax-n{color:var(--y);} .axc.a2 .ax-n{color:var(--z);}
-.ax-t{font-size:9px;color:var(--tx2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ax-b{height:4px;background:#080c12;border-radius:2px;overflow:hidden;}
-.ax-f{height:100%;width:0;border-radius:2px;}
-.axc.a0 .ax-f{background:var(--x);} .axc.a1 .ax-f{background:var(--y);} .axc.a2 .ax-f{background:var(--z);}
-.ax-m{display:flex;justify-content:space-between;font-size:8.5px;color:var(--tx3);margin-top:4px;font-variant-numeric:tabular-nums;}
+.speed-table{margin-top:10px;border-top:1px solid var(--border);padding-top:8px;}
+.speed-row{display:flex;justify-content:space-between;font-size:10px;padding:2.5px 0;gap:6px;}
+.speed-row .n{color:var(--text2);white-space:nowrap;}
+.speed-row .s{color:var(--text);font-weight:600;white-space:nowrap;}
+.speed-row.hl .n,.speed-row.hl .s{color:var(--accent);}
 
-/* ============ CENTER ============ */
-.vw{flex:1;position:relative;min-height:0;background:radial-gradient(ellipse at 50% 42%,#121c27 0%,var(--bg) 72%);}
-.vw canvas{display:block;width:100%;height:100%;}
-.vo{position:absolute;top:9px;left:9px;display:flex;gap:5px;flex-wrap:wrap;pointer-events:none;max-width:calc(100% - 18px);}
-.bdg{
-  padding:3.5px 8px;background:rgba(8,12,18,.82);border:1px solid var(--bd);border-radius:5px;
-  font-size:9px;backdrop-filter:blur(6px);letter-spacing:.5px;font-variant-numeric:tabular-nums;
-}
-.bdg.lv{border-color:rgba(46,213,115,.5);color:var(--ok);}
-.bdg.wn{border-color:rgba(255,159,67,.5);color:var(--ac);}
-.tp{background:var(--bg2);border-top:1px solid var(--bd);padding:8px 12px;display:flex;align-items:center;gap:9px;flex-shrink:0;}
-.tb{
-  width:32px;height:32px;border-radius:50%;border:1px solid var(--bd);background:var(--bg3);
-  color:var(--tx);cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:12px;transition:.14s;flex-shrink:0;
-}
-.tb:hover{background:#243040;border-color:var(--bd2);}
-.tb.pl{background:var(--ok);color:#04180c;border-color:#28b963;}
-.tb.pl:hover{background:#5ce58e;}
-.tb.st{background:rgba(255,71,87,.14);color:var(--dg);border-color:rgba(255,71,87,.42);}
-.tb.st:hover{background:rgba(255,71,87,.26);}
-.tb:disabled{opacity:.3;cursor:not-allowed;}
-.tm{font-size:14.5px;font-weight:700;color:var(--ac);min-width:118px;letter-spacing:.3px;font-variant-numeric:tabular-nums;}
-.tm small{color:var(--tx3);font-size:10px;font-weight:500;}
-.pg{flex:1;height:9px;background:var(--bg5);border-radius:5px;cursor:pointer;position:relative;border:1px solid var(--bd);min-width:60px;}
-.pg-f{height:100%;background:linear-gradient(90deg,var(--x),var(--y),var(--z));border-radius:4px;width:0;}
-.pg-h{position:absolute;top:-4px;width:2px;height:15px;background:#fff;border-radius:1px;left:0;pointer-events:none;box-shadow:0 0 7px rgba(255,255,255,.75);}
-.vl{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);flex-shrink:0;}
-.vl input{width:58px;}
-.spd{display:flex;align-items:center;gap:4px;flex-shrink:0;}
-.spd select{width:56px;}
+/* ---------- AXIS CARDS ---------- */
+.axis-card{padding:9px 10px;border-radius:6px;background:var(--bg4);margin-bottom:7px;border-left:3px solid var(--border);}
+.axis-card:last-child{margin-bottom:0;}
+.axis-card.x{border-left-color:var(--x);} .axis-card.y{border-left-color:var(--y);} .axis-card.z{border-left-color:var(--z);}
+.axis-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;}
+.axis-name{font-weight:700;font-size:11px;}
+.axis-card.x .axis-name{color:var(--x);} .axis-card.y .axis-name{color:var(--y);} .axis-card.z .axis-name{color:var(--z);}
+.axis-note{font-size:9px;color:var(--text2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.axis-bar{height:4px;background:#0a0f16;border-radius:2px;overflow:hidden;}
+.axis-fill{height:100%;width:0;border-radius:2px;}
+.axis-card.x .axis-fill{background:var(--x);} .axis-card.y .axis-fill{background:var(--y);} .axis-card.z .axis-fill{background:var(--z);}
+.axis-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--text2);margin-top:4px;}
 
-/* ============ STATS ============ */
-.sg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.stc{background:var(--bg5);border-radius:6px;padding:8px 6px;text-align:center;border:1px solid var(--bd);}
-.stc .v{font-size:16px;font-weight:700;color:var(--ac);line-height:1.1;font-variant-numeric:tabular-nums;}
-.stc .l{font-size:8px;color:var(--tx2);margin-top:2px;text-transform:uppercase;letter-spacing:.6px;}
-
-/* ============ INSPECTOR ============ */
-.ie{font-size:9.5px;color:var(--tx3);text-align:center;padding:13px 8px;line-height:1.8;}
-.ig{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.fd{display:flex;flex-direction:column;gap:3px;}
-.fd>span{font-size:8.5px;color:var(--tx2);text-transform:uppercase;letter-spacing:.7px;}
-.ap{display:flex;gap:3px;}
-.ap button{
-  flex:1;padding:5px 0;border:1px solid var(--bd);background:var(--bg5);border-radius:5px;
-  color:var(--tx2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;transition:.14s;
+/* ---------- CENTER ---------- */
+.viz-wrap{flex:1;position:relative;min-height:120px;background:
+  radial-gradient(ellipse at 50% 40%,#101923 0%,var(--bg) 70%);}
+.viz-wrap canvas{display:block;width:100%;height:100%;}
+.viz-overlay{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;max-width:calc(100% - 20px);}
+.badge{
+  padding:4px 9px;background:rgba(8,12,18,.78);border:1px solid var(--border);border-radius:5px;
+  font-size:9.5px;backdrop-filter:blur(6px);letter-spacing:.4px;white-space:nowrap;
 }
-.ap button:hover{border-color:var(--bd2);}
-.ap button.on[data-a="0"]{background:rgba(255,107,74,.2);border-color:var(--x);color:var(--x);}
-.ap button.on[data-a="1"]{background:rgba(74,255,139,.2);border-color:var(--y);color:var(--y);}
-.ap button.on[data-a="2"]{background:rgba(74,158,255,.2);border-color:var(--z);color:var(--z);}
-.ia{display:flex;gap:5px;margin-top:9px;}
-.ia .btn{flex:1;justify-content:center;}
-.io{margin-top:9px;background:var(--bg5);border:1px solid var(--bd);border-radius:6px;padding:7px 9px;}
-.io .kv .v{color:var(--y);}
+.badge.live{border-color:rgba(46,213,115,.5);color:var(--success);}
 
-/* ============ NOTE LIST ============ */
-.nl{max-height:200px;overflow-y:auto;}
-.ni{
-  display:flex;align-items:center;gap:6px;padding:4px 7px;border-radius:4px;font-size:9.5px;
-  cursor:pointer;transition:background .1s;border-left:2px solid transparent;font-variant-numeric:tabular-nums;
+.transport{
+  background:var(--bg2);border-top:1px solid var(--border);padding:9px 14px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;
 }
-.ni:hover{background:var(--bg4);}
-.ni.sel{background:rgba(255,159,67,.14);border-left-color:var(--ac);}
-.ni.ply{background:rgba(46,213,115,.15);border-left-color:var(--ok);}
-.ni.mut{opacity:.42;}
-.dt{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.dt.a0{background:var(--x);} .dt.a1{background:var(--y);} .dt.a2{background:var(--z);}
-.nn{font-weight:700;min-width:28px;}
-.nf{color:var(--tx2);min-width:52px;font-size:9px;}
-.nd{color:var(--tx3);font-size:9px;}
-.nt{color:var(--tx3);margin-left:auto;font-size:9px;}
-.nx{color:var(--dg);cursor:pointer;opacity:0;font-size:11px;padding:0 1px;transition:.1s;flex-shrink:0;}
-.ni:hover .nx{opacity:.65;} .nx:hover{opacity:1!important;}
+.tbtn{
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);
+  color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;transition:.15s;flex-shrink:0;
+}
+.tbtn:hover{background:#243040;border-color:var(--border2);}
+.tbtn.play{background:var(--success);color:#04180c;border-color:var(--success);}
+.tbtn.play:hover{background:#5ee08f;}
+.tbtn.stop{background:rgba(255,71,87,.15);color:var(--danger);border-color:rgba(255,71,87,.45);}
+.tbtn.stop:hover{background:rgba(255,71,87,.28);}
+.time-disp{font-size:15px;font-weight:700;color:var(--accent);min-width:96px;letter-spacing:.5px;white-space:nowrap;}
+.prog{flex:1;min-width:120px;height:8px;background:var(--bg4);border-radius:4px;cursor:pointer;position:relative;border:1px solid var(--border);}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--x),var(--y),var(--z));border-radius:3px;width:0;}
+.prog-head{position:absolute;top:-3px;width:2px;height:12px;background:#fff;border-radius:1px;left:0;pointer-events:none;box-shadow:0 0 6px rgba(255,255,255,.6);}
+.vol{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);flex-shrink:0;}
+.vol input{width:64px;}
 
-/* ============ GCODE PREVIEW ============ */
-.gp{
-  background:var(--bg5);border:1px solid var(--bd);border-radius:6px;padding:8px;
-  font-size:9px;max-height:158px;overflow:auto;white-space:pre;line-height:1.6;color:var(--tx2);
-}
-.gp .c,.gf .c{color:#48586a;} .gp .g,.gf .g{color:var(--ac);font-weight:700;}
-.gp .o,.gf .o{color:var(--y);} .gp .f,.gf .f{color:var(--z);}
-.gp .w,.gf .w{color:var(--dg);}
+/* ---------- STATS ---------- */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.stat{background:var(--bg4);border-radius:6px;padding:9px 8px;text-align:center;border:1px solid var(--border);}
+.stat-v{font-size:16px;font-weight:700;color:var(--accent);line-height:1.1;overflow:hidden;text-overflow:ellipsis;}
+.stat-l{font-size:8.5px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.6px;}
 
-/* ============ EDITOR ============ */
-.et{
-  display:flex;align-items:center;gap:7px;padding:6px 11px;border-bottom:1px solid var(--bd);
-  background:rgba(0,0,0,.24);flex-wrap:wrap;flex-shrink:0;
+/* ---------- INSPECTOR ---------- */
+.insp-empty{font-size:10px;color:var(--text2);text-align:center;padding:14px 8px;line-height:1.7;}
+.insp-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.field span{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;}
+.axis-pick{display:flex;gap:4px;}
+.axis-pick button{
+  flex:1;padding:5px 0;border:1px solid var(--border);background:var(--bg4);border-radius:5px;
+  color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;transition:.15s;
 }
-.tg{display:flex;align-items:center;gap:3px;padding-right:9px;border-right:1px solid var(--bd);}
-.tg:last-of-type{border-right:none;}
-.tl{font-size:8.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.9px;margin-right:2px;white-space:nowrap;}
-.tb2{
-  padding:4.5px 8px;border:1px solid var(--bd);border-radius:5px;background:var(--bg5);color:var(--tx2);
-  font-family:inherit;font-size:9.5px;cursor:pointer;transition:.14s;display:flex;align-items:center;gap:4px;white-space:nowrap;
-}
-.tb2:hover{border-color:var(--bd2);color:var(--tx);background:#16202c;}
-.tb2.on{background:rgba(255,159,67,.17);border-color:var(--ac);color:var(--ac);}
-.ab{width:24px;height:23px;padding:0;justify-content:center;font-weight:700;font-size:10px;}
-.ab.on[data-a="0"]{background:rgba(255,107,74,.22);border-color:var(--x);color:var(--x);}
-.ab.on[data-a="1"]{background:rgba(74,255,139,.22);border-color:var(--y);color:var(--y);}
-.ab.on[data-a="2"]{background:rgba(74,158,255,.22);border-color:var(--z);color:var(--z);}
-.et select{width:70px;font-size:9.5px;padding:3px 16px 3px 5px;}
-.ec{flex:1;position:relative;min-height:0;overflow:hidden;background:var(--bg5);}
-#prC{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none;}
+.axis-pick button.on[data-a="0"]{background:rgba(255,107,74,.2);border-color:var(--x);color:var(--x);}
+.axis-pick button.on[data-a="1"]{background:rgba(74,255,139,.2);border-color:var(--y);color:var(--y);}
+.axis-pick button.on[data-a="2"]{background:rgba(74,158,255,.2);border-color:var(--z);color:var(--z);}
+.insp-actions{display:flex;gap:6px;margin-top:10px;}
+.insp-actions .btn{flex:1;justify-content:center;}
+.insp-readout{margin-top:10px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:8px 10px;}
+.insp-readout .kv .v{color:var(--y);}
+.insp-readout .kv .v.over{color:var(--danger);}
 
-/* ============ STATUS ============ */
-.sb{
-  height:24px;background:var(--bg2);border-top:1px solid var(--bd);padding:0 12px;
-  font-size:9px;color:var(--tx2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;
+/* ---------- NOTE LIST ---------- */
+.note-list{max-height:190px;overflow-y:auto;}
+.note-item{
+  display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:4px;font-size:10px;
+  cursor:pointer;transition:.12s;border-left:2px solid transparent;
 }
-.sb .r{display:flex;gap:12px;align-items:center;font-variant-numeric:tabular-nums;}
-.sb .l{display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-.ld{width:6px;height:6px;border-radius:50%;background:var(--bd2);flex-shrink:0;}
-.ld.on{background:var(--ok);box-shadow:0 0 5px var(--ok);}
-.ld.rc{background:var(--dg);box-shadow:0 0 6px var(--dg);animation:bl 1s infinite;}
-@keyframes bl{50%{opacity:.3;}}
+.note-item:hover{background:var(--bg4);}
+.note-item.sel{background:rgba(255,159,67,.13);border-left-color:var(--accent);}
+.note-item.playing{background:rgba(46,213,115,.14);border-left-color:var(--success);}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot.a0{background:var(--x);} .dot.a1{background:var(--y);} .dot.a2{background:var(--z);}
+.nn{font-weight:700;min-width:30px;}
+.nf{color:var(--text2);min-width:52px;font-size:9px;}
+.nd{color:var(--text2);font-size:9px;}
+.nt{color:var(--text2);margin-left:auto;font-size:9px;}
+.nx{color:var(--danger);cursor:pointer;opacity:0;font-size:12px;padding:0 2px;transition:.12s;}
+.note-item:hover .nx{opacity:.7;}
+.nx:hover{opacity:1!important;}
 
-/* ============ MODAL ============ */
-.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1000;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(3px);}
-.mb.on{display:flex;}
-.md{background:var(--bg2);border:1px solid var(--bd2);border-radius:12px;width:100%;max-width:820px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);}
-.md-h{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px;background:rgba(0,0,0,.2);}
-.md-h h2{font-size:12.5px;font-weight:700;letter-spacing:.5px;}
-.md-x{margin-left:auto;background:none;border:none;color:var(--tx2);cursor:pointer;font-size:16px;line-height:1;}
-.md-x:hover{color:var(--dg);}
-.md-b{padding:14px 16px;overflow-y:auto;flex:1;}
-.md-f{padding:11px 16px;border-top:1px solid var(--bd);display:flex;gap:7px;justify-content:flex-end;background:rgba(0,0,0,.15);}
-.gf{background:var(--bg5);border:1px solid var(--bd);border-radius:8px;padding:11px;font-size:9.5px;white-space:pre;overflow:auto;max-height:48vh;line-height:1.65;color:var(--tx2);}
-.tbs{display:flex;gap:4px;margin-bottom:11px;flex-wrap:wrap;}
-.tab{padding:5px 11px;border:1px solid var(--bd);border-radius:6px;background:var(--bg5);color:var(--tx2);font-family:inherit;font-size:9.5px;cursor:pointer;}
-.tab.on{background:rgba(255,159,67,.16);border-color:var(--ac);color:var(--ac);}
-.hk{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:10.5px;align-items:center;}
-.hk kbd{background:var(--bg5);border:1px solid var(--bd2);border-bottom-width:2px;border-radius:4px;padding:2px 7px;font-family:inherit;font-size:9.5px;color:var(--ac);}
-.hk span{color:var(--tx2);}
-
-/* ============ TOAST ============ */
-#tt{position:fixed;bottom:34px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;}
-.tt{
-  background:rgba(17,24,32,.97);border:1px solid var(--bd2);border-radius:7px;padding:8px 15px;
-  font-size:10.5px;box-shadow:0 6px 24px rgba(0,0,0,.55);animation:ti .22s ease-out;max-width:78vw;
+/* ---------- GCODE PREVIEW ---------- */
+.gpre{
+  background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:9px;
+  font-size:9.5px;max-height:150px;overflow:auto;white-space:pre;line-height:1.6;color:var(--text2);
 }
-.tt.ok{border-color:rgba(46,213,115,.55);color:var(--ok);}
-.tt.wr{border-color:rgba(255,159,67,.55);color:var(--ac);}
-.tt.er{border-color:rgba(255,71,87,.55);color:var(--dg);}
-@keyframes ti{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.gpre .c{color:#4a5a6a;} .gpre .g{color:var(--accent);font-weight:600;}
+.gpre .co{color:var(--y);} .gpre .f{color:var(--z);} .gpre .w{color:var(--danger);font-weight:600;}
+
+/* ---------- EDITOR ---------- */
+.ed-toolbar{
+  display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.2);flex-wrap:wrap;flex-shrink:0;
+}
+.tb-group{display:flex;align-items:center;gap:4px;padding-right:10px;border-right:1px solid var(--border);}
+.tb-group:last-child{border-right:none;padding-right:0;}
+.tb-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.9px;margin-right:3px;white-space:nowrap;}
+.tool-btn{
+  padding:5px 9px;border:1px solid var(--border);border-radius:5px;background:var(--bg4);color:var(--text2);
+  font-family:inherit;font-size:10px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:4px;white-space:nowrap;
+}
+.tool-btn:hover{border-color:var(--border2);color:var(--text);}
+.tool-btn.on{background:rgba(255,159,67,.18);border-color:var(--accent);color:var(--accent);}
+.ax-btn{width:26px;height:24px;padding:0;justify-content:center;font-weight:700;}
+.ax-btn.on[data-brush="0"]{background:rgba(255,107,74,.22);border-color:var(--x);color:var(--x);}
+.ax-btn.on[data-brush="1"]{background:rgba(74,255,139,.22);border-color:var(--y);color:var(--y);}
+.ax-btn.on[data-brush="2"]{background:rgba(74,158,255,.22);border-color:var(--z);color:var(--z);}
+.ax-btn.on[data-brush="-1"]{background:rgba(255,159,67,.22);border-color:var(--accent);color:var(--accent);}
+
+.ed-canvas-wrap{flex:1;position:relative;min-height:80px;overflow:hidden;background:var(--bg4);}
+#prCanvas{display:block;width:100%;height:100%;cursor:crosshair;}
+.ed-hint{
+  position:absolute;bottom:8px;right:10px;font-size:9px;color:rgba(122,134,148,.7);
+  background:rgba(8,12,18,.72);padding:4px 8px;border-radius:4px;pointer-events:none;letter-spacing:.3px;
+  max-width:64%;text-align:right;line-height:1.5;
+}
+
+/* ---------- STATUS ---------- */
+.statusbar{
+  height:26px;background:var(--bg2);border-top:1px solid var(--border);padding:0 14px;
+  font-size:9.5px;color:var(--text2);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;
+}
+.statusbar>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.statusbar .r{display:flex;gap:14px;align-items:center;flex-shrink:0;white-space:nowrap;}
+.led{width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;margin-right:5px;box-shadow:0 0 5px var(--success);}
+.led.off{background:var(--border2);box-shadow:none;}
+.led.rec{background:var(--danger);box-shadow:0 0 6px var(--danger);animation:blink 1s infinite;}
+@keyframes blink{50%{opacity:.35;}}
+
+/* ---------- MODAL ---------- */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.modal-bg.on{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:820px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.modal-head h2{font-size:13px;font-weight:700;letter-spacing:.6px;}
+.modal-x{margin-left:auto;background:none;border:none;color:var(--text2);cursor:pointer;font-size:17px;line-height:1;}
+.modal-x:hover{color:var(--danger);}
+.modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.gfull{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:10px;white-space:pre;overflow:auto;max-height:48vh;line-height:1.6;color:var(--text2);}
+.opt-row{display:flex;gap:7px;align-items:center;font-size:10px;color:var(--text2);margin-bottom:10px;cursor:pointer;line-height:1.5;}
+.opt-row:hover{color:var(--text);}
+.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
+.tab{padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg4);color:var(--text2);font-family:inherit;font-size:10px;cursor:pointer;}
+.tab.on{background:rgba(255,159,67,.16);border-color:var(--accent);color:var(--accent);}
 
 ::-webkit-scrollbar{width:9px;height:9px;}
-::-webkit-scrollbar-track{background:var(--bg5);}
-::-webkit-scrollbar-thumb{background:var(--bd);border-radius:5px;border:2px solid var(--bg5);}
-::-webkit-scrollbar-thumb:hover{background:var(--bd2);}
-::-webkit-scrollbar-corner{background:var(--bg5);}
+::-webkit-scrollbar-track{background:var(--bg4);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--border2);}
 
-@media(max-width:1280px){.mn{grid-template-columns:250px minmax(0,1fr) 274px;}}
+/* ============ АДАПТАЦИЯ ПОД ЭКРАН ПК ============ */
+/* широкие мониторы */
+@media(min-width:1600px){
+  :root{--lw:minmax(280px,330px);--rw:minmax(330px,390px);--bh:clamp(250px,34vh,420px);}
+  .note-list{max-height:260px;}
+  .gpre{max-height:200px;}
+}
+@media(min-width:2100px){
+  :root{--lw:minmax(320px,380px);--rw:minmax(380px,440px);}
+  .ed-hint{max-width:46%;}
+}
+/* ноутбук 1280–1440 */
+@media(max-width:1440px){
+  :root{--lw:minmax(232px,258px);--rw:minmax(276px,304px);}
+  .btn{padding:6px 10px;font-size:10.5px;}
+  .logo-text{font-size:12px;letter-spacing:1px;}
+}
+@media(max-width:1240px){
+  .logo-sub{display:none;}
+  .ed-hint{display:none;}
+}
+/* низкие экраны */
+@media(max-height:820px){
+  :root{--bh:clamp(190px,33vh,280px);}
+  .note-list{max-height:140px;}
+  .gpre{max-height:110px;}
+}
+@media(max-height:700px){
+  :root{--bh:clamp(170px,36vh,230px);}
+  .header{height:46px;}
+  .upload-area{padding:10px;}
+  .upload-icon{font-size:20px;margin-bottom:3px;}
+  .note-list{max-height:104px;}
+  .gpre{max-height:84px;}
+  .sec-body{padding:10px;}
+}
+@media(max-height:600px){
+  :root{--bh:clamp(150px,40vh,190px);}
+  .logo-sub{display:none;}
+}
+/* планшеты / узкое окно — вертикальная раскладка */
 @media(max-width:1080px){
-  .mn{grid-template-columns:230px minmax(0,1fr) 250px;}
-  .lg-s{display:none;}
+  html,body{overflow:auto;}
+  .shell{height:auto;min-height:100vh;}
+  .main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;}
+  .left-panel,.center-panel,.right-panel{grid-column:1/-1;grid-row:auto;border:none;border-bottom:1px solid var(--border);}
+  .center-panel{min-height:340px;}
+  .row-split{display:none;}
+  .bottom-panel{grid-column:1/-1;grid-row:auto;min-height:320px;height:60vh;border-top:1px solid var(--border);}
+  .header{height:auto;padding:10px 12px;flex-wrap:wrap;}
+  .header-actions{width:100%;justify-content:flex-start;}
 }
 </style>
 </head>
 <body>
-<div class="sh">
+<div class="shell">
 
-<!-- ============ HEADER ============ -->
-<div class="hdr">
-  <div class="lg">
-    <div class="lg-i">⚙</div>
-    <div style="min-width:0;">
-      <div class="lg-t">CNC <b>♪</b> STEPPER MUSIC</div>
-      <div class="lg-s">MIDI → шаговые двигатели → G-code · 3 оси · 200×200×200 мм</div>
-    </div>
-  </div>
-  <div class="hdr-a">
-    <button class="btn" id="bDemo" title="Загрузить демонстрационную мелодию">🎵 Демо</button>
-    <button class="btn" id="bAxis" title="Автоматически распределить ноты по осям X/Y/Z">🔀 Авто-оси</button>
-    <button class="btn" id="bFit" title="Показать весь трек">⤢ Весь трек</button>
-    <div class="hdr-sep"></div>
-    <button class="btn btn-d" id="bClr" title="Очистить проект">🗑 Очистить</button>
-    <button class="btn" id="bHelp" title="Горячие клавиши и справка">? Справка</button>
-    <button class="btn btn-p" id="bGc" disabled title="Экспорт G-code">📤 G-code</button>
-  </div>
-</div>
-
-<!-- ============ MAIN ============ -->
-<div class="mn">
-
-  <!-- ---------- LEFT ---------- -->
-  <div class="lp">
-
-    <div class="sec" id="sFile">
-      <div class="sec-h">📂 MIDI файл<span class="ch">▼</span></div>
-      <div class="sec-b">
-        <div class="up" id="upA">
-          <div class="up-i">🎹</div>
-          <div class="up-t">Перетащите <b>.mid / .midi</b><br>или кликните для выбора</div>
-          <input type="file" id="fIn" accept=".midi,.mid" style="display:none">
-        </div>
-        <div id="fInf" style="display:none;margin-top:9px;background:var(--bg5);border-radius:6px;padding:7px 9px;border:1px solid var(--bd);">
-          <div class="kv"><span class="k">Файл</span><span class="v" id="kName">—</span></div>
-          <div class="kv"><span class="k">Длительность</span><span class="v" id="kDur">—</span></div>
-          <div class="kv"><span class="k">Нот</span><span class="v" id="kNotes">—</span></div>
-          <div class="kv"><span class="k">Дорожек</span><span class="v" id="kTrk">—</span></div>
-          <div class="kv"><span class="k">Темп</span><span class="v" id="kBpm">—</span></div>
-          <div class="kv"><span class="k">Подавлено (полифония&gt;3)</span><span class="v wr" id="kMut">0</span></div>
-        </div>
+  <!-- ================= HEADER ================= -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">⚙</div>
+      <div style="min-width:0;">
+        <div class="logo-text">CNC <span>♪</span> STEPPER MUSIC</div>
+        <div class="logo-sub">MIDI → Шаговые двигатели → G-code</div>
       </div>
     </div>
+    <div class="header-actions">
+      <button class="btn btn-icon" id="btnTogLeft" title="Скрыть / показать левую панель">◧</button>
+      <button class="btn btn-icon" id="btnTogRight" title="Скрыть / показать правую панель">◨</button>
+      <div class="hsep"></div>
+      <button class="btn" id="btnDemo">🎵 Демо</button>
+      <button class="btn" id="btnAutoAxis">🔀 Авто-оси</button>
+      <button class="btn" id="btnClear">🗑 Очистить</button>
+      <button class="btn btn-primary" id="btnGcode" disabled>📤 Экспорт G-code</button>
+    </div>
+  </div>
 
-    <div class="sec" id="sC4">
-      <div class="sec-h">⚡ Эталон скорости · нота C4<span class="ch">▼</span></div>
-      <div class="sec-b">
-        <div class="c4b">
-          <div class="c4l">C4 = базовая частота шагов</div>
-          <div class="c4v"><span id="c4D">261.63</span><span class="c4u">шаг/сек (Гц)</span></div>
-          <input type="range" id="c4R" min="40" max="2500" step="1" value="262" style="margin-top:9px;">
-          <div class="row" style="padding-top:7px;">
-            <label>Точное значение</label>
-            <input type="number" id="c4I" class="i-s" value="261.63" min="10" max="40000" step="0.01">
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+
+    <!-- ---------- LEFT ---------- -->
+    <div class="left-panel">
+
+      <div class="sec">
+        <div class="sec-title">📂 MIDI файл</div>
+        <div class="sec-body">
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">🎹</div>
+            <div class="upload-text">Перетащите <b>.mid / .midi</b><br>или кликните для выбора</div>
+            <input type="file" id="fileInput" accept=".midi,.mid" style="display:none">
           </div>
-          <div class="prst">
-            <button class="btn btn-s" data-c4="261.63">C4 = 261.63</button>
-            <button class="btn btn-s" data-c4="200">200</button>
-            <button class="btn btn-s" data-c4="400">400</button>
-            <button class="btn btn-s" data-c4="800">800</button>
-            <button class="btn btn-s" data-c4="1600">1600</button>
+          <div id="fileInfo" style="display:none;margin-top:10px;background:var(--bg4);border-radius:6px;padding:8px 10px;">
+            <div class="kv"><span class="k">Файл</span><span class="v" id="fName">—</span></div>
+            <div class="kv"><span class="k">Длительность</span><span class="v" id="fDur">—</span></div>
+            <div class="kv"><span class="k">Нот</span><span class="v" id="fNotes">—</span></div>
+            <div class="kv"><span class="k">Дорожек</span><span class="v" id="fTracks">—</span></div>
+            <div class="kv"><span class="k">Темп</span><span class="v" id="fTempo">—</span></div>
           </div>
         </div>
-        <div class="fm">
-          <b>Hz(n) = C4 × 2<sup>(n−60)/12</sup></b><br>
-          Октава выше → ×2 · ниже → ×0.5<br>
-          <b>F[мм/мин] = Hz × 60 ÷ шаг/мм</b>
-        </div>
-        <div class="st" id="sTab"></div>
       </div>
-    </div>
 
-    <div class="sec" id="sAx">
-      <div class="sec-h">🔧 Оси · 3 мотора<span class="ch">▼</span></div>
-      <div class="sec-b" style="padding:9px 11px;">
-        <div class="axc a0" id="ac0"><div class="ax-h"><span class="ax-n">X</span><span class="ax-t" id="an0">—</span></div><div class="ax-b"><div class="ax-f" id="ab0"></div></div><div class="ax-m"><span id="ap0">0.0 мм</span><span id="ah0">0 шаг/с</span></div></div>
-        <div class="axc a1" id="ac1"><div class="ax-h"><span class="ax-n">Y</span><span class="ax-t" id="an1">—</span></div><div class="ax-b"><div class="ax-f" id="ab1"></div></div><div class="ax-m"><span id="ap1">0.0 мм</span><span id="ah1">0 шаг/с</span></div></div>
-        <div class="axc a2" id="ac2"><div class="ax-h"><span class="ax-n">Z</span><span class="ax-t" id="an2">—</span></div><div class="ax-b"><div class="ax-f" id="ab2"></div></div><div class="ax-m"><span id="ap2">0.0 мм</span><span id="ah2">0 шаг/с</span></div></div>
-      </div>
-    </div>
-
-    <div class="sec" id="sMech">
-      <div class="sec-h">📐 Механика станка<span class="ch">▼</span></div>
-      <div class="sec-b">
-        <div class="row"><label>Шагов на мм</label><input type="number" id="mSpmm" class="i-s" value="80" min="1" max="5000"></div>
-        <div class="row"><label>Область X, мм</label><input type="number" id="mAx" class="i-s" value="200" min="1" max="5000"></div>
-        <div class="row"><label>Область Y, мм</label><input type="number" id="mAy" class="i-s" value="200" min="1" max="5000"></div>
-        <div class="row"><label>Область Z, мм</label><input type="number" id="mAz" class="i-s" value="200" min="1" max="5000"></div>
-        <div class="row"><label>Макс. подача, мм/мин</label><input type="number" id="mMf" class="i-s" value="6000" min="10" max="200000"></div>
-        <div class="row"><label>Мин. ход, мм</label><input type="number" id="mMm" class="i-s" value="0.05" min="0.001" max="20" step="0.01"></div>
-      </div>
-    </div>
-
-    <div class="sec" id="sSnd">
-      <div class="sec-h">🔊 Симуляция звука<span class="ch">▼</span></div>
-      <div class="sec-b">
-        <div class="row" style="padding-bottom:2px;"><label style="font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);">Источник частоты</label></div>
-        <div class="ap" style="margin-bottom:8px;">
-          <button class="tb2 on" id="aNote" style="flex:1;justify-content:center;">Нота (муз.)</button>
-          <button class="tb2" id="aMot" style="flex:1;justify-content:center;">Мотор (шаг/с)</button>
-        </div>
-        <div class="row" style="padding-bottom:2px;"><label style="font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);">Форма волны</label></div>
-        <div style="display:flex;gap:3px;margin-bottom:9px;">
-          <button class="tb2 on" data-w="square" style="flex:1;justify-content:center;">Меандр</button>
-          <button class="tb2" data-w="sawtooth" style="flex:1;justify-content:center;">Пила</button>
-          <button class="tb2" data-w="triangle" style="flex:1;justify-content:center;">Треуг</button>
-        </div>
-        <div class="row"><label>Громкость</label><span class="vv" id="vV">30%</span></div>
-        <input type="range" id="vR" min="0" max="100" value="30">
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ---------- CENTER ---------- -->
-  <div class="cp">
-    <div class="vw">
-      <canvas id="vzC"></canvas>
-      <div class="vo">
-        <div class="bdg" id="bState">⏸ ОЖИДАНИЕ</div>
-        <div class="bdg" id="bPoly">ПОЛИФОНИЯ 0/3</div>
-        <div class="bdg" id="bPos">X— Y— Z—</div>
-        <div class="bdg wn" id="bWarn" style="display:none;"></div>
-      </div>
-    </div>
-    <div class="tp">
-      <button class="tb" id="bRew" title="В начало (Home)">⏮</button>
-      <button class="tb pl" id="bPlay" title="Воспроизвести / Пауза (Space)">▶</button>
-      <button class="tb st" id="bStop" title="Стоп (Esc)">⏹</button>
-      <div class="tm" id="tD">0:00.0 <small>/ 0:00.0</small></div>
-      <div class="pg" id="pB"><div class="pg-f" id="pF"></div><div class="pg-h" id="pH"></div></div>
-      <div class="spd"><span style="font-size:9px;color:var(--tx3);">ТЕМП</span>
-        <select id="spdS"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
-      </div>
-      <div class="vl">🔊<input type="range" id="mV" min="0" max="100" value="30"></div>
-    </div>
-  </div>
-
-  <div class="sp" id="spl" title="Потяните, чтобы изменить высоту редактора"></div>
-
-  <!-- ---------- RIGHT ---------- -->
-  <div class="rp">
-
-    <div class="sec">
-      <div class="sec-h">✏️ Инспектор ноты<span class="ch">▼</span></div>
-      <div class="sec-b">
-        <div id="iE" class="ie">Выберите ноту на нотном стане<br>или кликните по пустому месту,<br>чтобы вставить новую</div>
-        <div id="iB" style="display:none;">
-          <div class="ig">
-            <div class="fd"><span>Нота</span><select id="eP"></select></div>
-            <div class="fd"><span>Начало, сек</span><input type="number" id="eS" step="0.01" min="0"></div>
-            <div class="fd"><span>Длительность, сек</span><input type="number" id="eD" step="0.01" min="0.02"></div>
-            <div class="fd"><span>Ось мотора</span>
-              <div class="ap" id="eA"><button data-a="0">X</button><button data-a="1">Y</button><button data-a="2">Z</button></div>
+      <div class="sec">
+        <div class="sec-title">⚡ Скорость мотора · эталон C4</div>
+        <div class="sec-body">
+          <div class="c4-box">
+            <div class="c4-head">
+              <div class="c4-label">C4 = базовая частота шагов</div>
+            </div>
+            <div style="display:flex;align-items:baseline;">
+              <div class="c4-value" id="c4Disp">261.6</div><div class="c4-unit">шаг/сек (Гц)</div>
+            </div>
+            <input type="range" id="c4Range" min="50" max="2000" step="1" value="262" style="margin-top:10px;">
+            <div class="row" style="padding-top:8px;">
+              <label for="c4Input">Точное значение</label>
+              <input type="number" id="c4Input" class="inp-sm" value="261.63" min="20" max="20000" step="0.01">
+            </div>
+            <div class="presets">
+              <button class="btn btn-sm" data-c4="261.63">C4 точно</button>
+              <button class="btn btn-sm" data-c4="200">200</button>
+              <button class="btn btn-sm" data-c4="400">400</button>
+              <button class="btn btn-sm" data-c4="800">800</button>
+              <button class="btn btn-sm" data-c4="1200">1200</button>
             </div>
           </div>
-          <div class="io">
-            <div class="kv"><span class="k">Частота ноты</span><span class="v" id="rF">—</span></div>
-            <div class="kv"><span class="k">Скорость мотора</span><span class="v" id="rS">—</span></div>
-            <div class="kv"><span class="k">Подача F (1 ось)</span><span class="v" id="rFd">—</span></div>
-            <div class="kv"><span class="k">Ход за ноту</span><span class="v" id="rDs">—</span></div>
-            <div class="kv"><span class="k">Статус</span><span class="v" id="rSt">—</span></div>
+
+          <div class="row"><label>Формула</label><span class="val" style="min-width:auto;color:var(--text2)">×2^(n/12)</span></div>
+          <div style="font-size:9.5px;color:var(--text2);line-height:1.65;background:var(--bg4);padding:8px;border-radius:6px;border:1px solid var(--border);">
+            Скорость любой ноты = <b style="color:var(--accent)">C4 × 2^(полутонов/12)</b>.<br>
+            Октава выше → скорость ×2, октава ниже → ×0.5.
           </div>
-          <div class="ia">
-            <button class="btn btn-s" id="eDu" title="Дублировать (D)">⧉ Дубль</button>
-            <button class="btn btn-s" id="eOc" title="Поднять на октаву">+12</button>
-            <button class="btn btn-s" id="eOd" title="Опустить на октаву">−12</button>
-            <button class="btn btn-s btn-d" id="eDe" title="Удалить (Delete)">✕ Удалить</button>
+
+          <div class="speed-table" id="speedTable"></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">🔧 Оси · 3 мотора</div>
+        <div class="sec-body" style="padding:10px;">
+          <div class="axis-card x">
+            <div class="axis-head"><span class="axis-name">X</span><span class="axis-note" id="axN0">—</span></div>
+            <div class="axis-bar"><div class="axis-fill" id="axB0"></div></div>
+            <div class="axis-meta"><span id="axP0">0.0 мм</span><span id="axH0">0 Гц</span></div>
+          </div>
+          <div class="axis-card y">
+            <div class="axis-head"><span class="axis-name">Y</span><span class="axis-note" id="axN1">—</span></div>
+            <div class="axis-bar"><div class="axis-fill" id="axB1"></div></div>
+            <div class="axis-meta"><span id="axP1">0.0 мм</span><span id="axH1">0 Гц</span></div>
+          </div>
+          <div class="axis-card z">
+            <div class="axis-head"><span class="axis-name">Z</span><span class="axis-note" id="axN2">—</span></div>
+            <div class="axis-bar"><div class="axis-fill" id="axB2"></div></div>
+            <div class="axis-meta"><span id="axP2">0.0 мм</span><span id="axH2">0 Гц</span></div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="sec">
-      <div class="sec-h">📊 Статистика<span class="ch">▼</span></div>
-      <div class="sec-b">
-        <div class="sg">
-          <div class="stc"><div class="v" id="qN">0</div><div class="l">Нот</div></div>
-          <div class="stc"><div class="v" id="qD">0.0</div><div class="l">Секунд</div></div>
-          <div class="stc"><div class="v" id="qR">—</div><div class="l">Диапазон</div></div>
-          <div class="stc"><div class="v" id="qG">0</div><div class="l">Кадров G1</div></div>
-        </div>
-        <div style="margin-top:8px;">
-          <div class="kv"><span class="k">Нот на X</span><span class="v" style="color:var(--x)" id="qX">0</span></div>
-          <div class="kv"><span class="k">Нот на Y</span><span class="v" style="color:var(--y)" id="qY">0</span></div>
-          <div class="kv"><span class="k">Нот на Z</span><span class="v" style="color:var(--z)" id="qZ">0</span></div>
-          <div class="kv"><span class="k">Подавлено (>&3)</span><span class="v wr" id="qM">0</span></div>
-          <div class="kv"><span class="k">Макс. подача</span><span class="v" id="qF">F0</span></div>
-          <div class="kv"><span class="k">Полный ход X/Y/Z</span><span class="v" id="qT">0 / 0 / 0 мм</span></div>
+      <div class="sec">
+        <div class="sec-title">📐 Механика станка</div>
+        <div class="sec-body">
+          <div class="row"><label for="spmm">Шагов на мм</label><input type="number" id="spmm" class="inp-sm" value="80" min="1" max="5000"></div>
+          <div class="row"><label for="arX">Область X, мм</label><input type="number" id="arX" class="inp-sm" value="200" min="1" max="5000"></div>
+          <div class="row"><label for="arY">Область Y, мм</label><input type="number" id="arY" class="inp-sm" value="200" min="1" max="5000"></div>
+          <div class="row"><label for="arZ">Область Z, мм</label><input type="number" id="arZ" class="inp-sm" value="200" min="1" max="5000"></div>
+          <div class="row"><label for="maxFeed">Макс. подача, мм/мин</label><input type="number" id="maxFeed" class="inp-sm" value="6000" min="10" max="100000"></div>
+          <div class="row"><label for="minMove">Мин. ход, мм</label><input type="number" id="minMove" class="inp-sm" value="0.05" min="0.001" max="10" step="0.01"></div>
         </div>
       </div>
+
+      <div class="sec">
+        <div class="sec-title">🔊 Симуляция звука</div>
+        <div class="sec-body">
+          <div class="row"><label>Источник частоты</label></div>
+          <div class="axis-pick" style="margin-bottom:8px;">
+            <button class="tool-btn on" id="audNote" style="flex:1;justify-content:center;">Нота</button>
+            <button class="tool-btn" id="audMotor" style="flex:1;justify-content:center;">Мотор</button>
+          </div>
+          <div class="row"><label>Форма волны</label></div>
+          <div style="display:flex;gap:4px;margin-bottom:8px;">
+            <button class="tool-btn on" data-wave="square" style="flex:1;justify-content:center;">Меандр</button>
+            <button class="tool-btn" data-wave="sawtooth" style="flex:1;justify-content:center;">Пила</button>
+            <button class="tool-btn" data-wave="triangle" style="flex:1;justify-content:center;">Треуг</button>
+          </div>
+          <div class="row"><label for="volRange">Громкость</label><span class="val" id="volVal">30%</span></div>
+          <input type="range" id="volRange" min="0" max="100" value="30">
+        </div>
+      </div>
+
     </div>
 
-    <div class="sec">
-      <div class="sec-h">🎵 Список нот<span class="sec-t"><button class="btn btn-s" id="bCsv">CSV</button></span><span class="ch">▼</span></div>
-      <div class="sec-b" style="padding:5px 6px;">
-        <div class="nl" id="nL"><div class="ie">Нет нот</div></div>
+    <!-- ---------- CENTER ---------- -->
+    <div class="center-panel">
+      <div class="viz-wrap">
+        <canvas id="vizCanvas"></canvas>
+        <div class="viz-overlay">
+          <div class="badge" id="vizState">⏸ ОЖИДАНИЕ</div>
+          <div class="badge" id="vizPoly">ПОЛИФОНИЯ 0/3</div>
+          <div class="badge" id="vizPos">X0 Y0 Z0</div>
+        </div>
+      </div>
+      <div class="transport">
+        <button class="tbtn" id="btnRew" title="В начало">⏮</button>
+        <button class="tbtn play" id="btnPlay" title="Воспроизвести (Space)">▶</button>
+        <button class="tbtn stop" id="btnStop" title="Стоп">⏹</button>
+        <div class="time-disp" id="timeDisp">0:00.0</div>
+        <div class="prog" id="progBar"><div class="prog-fill" id="progFill"></div><div class="prog-head" id="progHead"></div></div>
+        <div class="vol">🔊<input type="range" id="mVol" min="0" max="100" value="30" aria-label="Громкость"></div>
       </div>
     </div>
 
-    <div class="sec">
-  <div class="sec-h">📝 G-code превью<span class="sec-t">
-    <button class="btn btn-s on" id="bCmnt" title="Показывать комментарии в G-code">💬 Комм.</button>
-    <button class="btn btn-s" id="bGc2">Открыть</button>
-  </span><span class="ch">▼</span></div>
-  <div class="sec-b">
-    <div class="gp" id="gP">; Добавьте ноты или загрузите MIDI</div>
+    <!-- ---------- RIGHT ---------- -->
+    <div class="right-panel">
+
+      <div class="sec">
+        <div class="sec-title">✏️ Редактор ноты <span class="spacer" id="inspId"></span></div>
+        <div class="sec-body">
+          <div id="inspEmpty" class="insp-empty">
+            Выберите ноту на нотном стане<br>или кликните по пустому месту,<br>чтобы вставить новую
+          </div>
+          <div id="inspBody" style="display:none;">
+            <div class="insp-grid">
+              <div class="field"><span>Нота (MIDI)</span>
+                <select id="ePitch"></select>
+              </div>
+              <div class="field"><span>Ось</span>
+                <div class="axis-pick" id="eAxis">
+                  <button type="button" data-a="0">X</button><button type="button" data-a="1">Y</button><button type="button" data-a="2">Z</button>
+                </div>
+              </div>
+              <div class="field"><span>Начало, сек</span>
+                <input type="number" id="eStart" step="0.01" min="0">
+              </div>
+              <div class="field"><span>Длительность, сек</span>
+                <input type="number" id="eDur" step="0.01" min="0.05">
+              </div>
+            </div>
+            <div class="insp-readout">
+              <div class="kv"><span class="k">Частота ноты</span><span class="v" id="eFreq">—</span></div>
+              <div class="kv"><span class="k">Скорость мотора</span><span class="v" id="eSpeed">—</span></div>
+              <div class="kv"><span class="k">Подача F</span><span class="v" id="eFeed">—</span></div>
+              <div class="kv"><span class="k">Ход за ноту</span><span class="v" id="eDist">—</span></div>
+            </div>
+            <div class="insp-actions">
+              <button class="btn btn-sm" id="eDup">⧉ Дубль</button>
+              <button class="btn btn-sm btn-danger" id="eDel">✕ Удалить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">📊 Статистика</div>
+        <div class="sec-body">
+          <div class="stat-grid">
+            <div class="stat"><div class="stat-v" id="stNotes">0</div><div class="stat-l">Нот</div></div>
+            <div class="stat"><div class="stat-v" id="stDur">0.0</div><div class="stat-l">Секунд</div></div>
+            <div class="stat"><div class="stat-v" id="stRange">—</div><div class="stat-l">Диапазон</div></div>
+            <div class="stat"><div class="stat-v" id="stGcode">0</div><div class="stat-l">Кадров G</div></div>
+          </div>
+          <div style="margin-top:8px;">
+            <div class="kv"><span class="k">X нот</span><span class="v" style="color:var(--x)" id="stX">0</span></div>
+            <div class="kv"><span class="k">Y нот</span><span class="v" style="color:var(--y)" id="stY">0</span></div>
+            <div class="kv"><span class="k">Z нот</span><span class="v" style="color:var(--z)" id="stZ">0</span></div>
+            <div class="kv"><span class="k">Макс. подача</span><span class="v" id="stMaxF">F0</span></div>
+            <div class="kv"><span class="k">Полный ход</span><span class="v" id="stTravel">0 / 0 / 0 мм</span></div>
+            <div class="kv"><span class="k">Кадров F &gt; лимита</span><span class="v" id="stWarn">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">🎵 Список нот <span class="spacer"><button class="btn btn-sm" id="btnCsv">CSV</button></span></div>
+        <div class="sec-body" style="padding:6px;">
+          <div class="note-list" id="noteList"><div class="insp-empty">Нет нот</div></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-title">📝 G-code превью</div>
+        <div class="sec-body">
+          <div class="gpre" id="gPre">; Загрузите MIDI или добавьте ноты</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ---------- РЕСАЙЗЕР ---------- -->
+    <div class="row-split" id="rowSplit" title="Потяните, чтобы изменить высоту редактора · двойной клик — сброс"></div>
+
+    <!-- ---------- BOTTOM: PIANO ROLL ---------- -->
+    <div class="bottom-panel" id="bottomPanel">
+      <div class="ed-toolbar">
+        <div class="tb-group">
+          <span class="tb-label">Инструмент</span>
+          <button class="tool-btn on" data-tool="draw" title="Рисовать ноты (B)">✏️ Рисовать</button>
+          <button class="tool-btn" data-tool="select" title="Выбор / перемещение (V)">👆 Выбор</button>
+          <button class="tool-btn" data-tool="erase" title="Стирать (E)">🧹 Стереть</button>
+          <button class="tool-btn" data-tool="rect" title="Удалить рамкой (R)">▭ Рамка</button>
+        </div>
+        <div class="tb-group">
+          <span class="tb-label">Ось</span>
+          <button class="tool-btn ax-btn on" data-brush="0">X</button>
+          <button class="tool-btn ax-btn" data-brush="1">Y</button>
+          <button class="tool-btn ax-btn" data-brush="2">Z</button>
+          <button class="tool-btn ax-btn" data-brush="-1" title="Авто-выбор свободной оси" style="width:38px;">AUTO</button>
+        </div>
+        <div class="tb-group">
+          <span class="tb-label">Длит.</span>
+          <select id="selLen" style="width:74px;" title="Длительность новой ноты">
+            <option value="2">1/1</option>
+            <option value="1">1/2</option>
+            <option value="0.5" selected>1/4</option>
+            <option value="0.25">1/8</option>
+            <option value="0.125">1/16</option>
+            <option value="0.0625">1/32</option>
+          </select>
+        </div>
+        <div class="tb-group">
+          <span class="tb-label">Сетка</span>
+          <select id="selSnap" style="width:74px;" title="Привязка к сетке">
+            <option value="1">1 доля</option>
+            <option value="0.5">1/2</option>
+            <option value="0.25" selected>1/4</option>
+            <option value="0.125">1/8</option>
+            <option value="0.0625">1/16</option>
+            <option value="0">Выкл</option>
+          </select>
+        </div>
+        <div class="tb-group">
+          <span class="tb-label">Масштаб</span>
+          <button class="tool-btn" id="zOut" title="Уменьшить">−</button>
+          <button class="tool-btn" id="zIn" title="Увеличить">+</button>
+          <button class="tool-btn" id="zFit" title="Показать весь трек">⤢ Весь трек</button>
+          <button class="tool-btn on" id="btnFollow" title="Автопрокрутка за playhead">⏵ Следить</button>
+        </div>
+        <div class="tb-group" style="margin-left:auto;border:none;">
+          <span class="tb-label" id="edInfo">нет данных</span>
+        </div>
+      </div>
+      <div class="ed-canvas-wrap">
+        <canvas id="prCanvas"></canvas>
+        <div class="ed-hint">ЛКМ — вставить · ПКМ — удалить · край ноты — длительность · клик по линейке — переход · колесо — прокрутка · Shift+колесо — масштаб · Space — плей</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STATUS ================= -->
+  <div class="statusbar">
+    <span><span class="led off" id="led"></span><span id="stLeft">Готов к работе. Загрузите MIDI файл или нажмите «Демо».</span></span>
+    <span class="r">
+      <span id="stBpm">BPM: —</span>
+      <span id="stSel">Выбрано: 0</span>
+      <span>v2.3</span>
+    </span>
   </div>
 </div>
 
-  </div>
-
-  <!-- ---------- BOTTOM: PIANO ROLL ---------- -->
-  <div class="bp">
-    <div class="et">
-      <div class="tg">
-        <span class="tl">Инструмент</span>
-        <button class="tb2 on" data-tool="draw" title="Рисовать ноты (B)">✏️ Рисовать</button>
-        <button class="tb2" data-tool="select" title="Выбор и перемещение (V)">👆 Выбор</button>
-        <button class="tb2" data-tool="erase" title="Стирание (E)">🧹 Стереть</button>
-      </div>
-      <div class="tg">
-        <span class="tl">Ось</span>
-        <button class="tb2 ab on" data-br="0" title="Новые ноты на ось X">X</button>
-        <button class="tb2 ab" data-br="1" title="Новые ноты на ось Y">Y</button>
-        <button class="tb2 ab" data-br="2" title="Новые ноты на ось Z">Z</button>
-        <button class="tb2 ab" data-br="-1" style="width:40px;font-size:8.5px;" title="Автоматически выбирать свободную ось">AUTO</button>
-      </div>
-      <div class="tg">
-        <span class="tl">Длит.</span>
-        <select id="sL" title="Длительность новой ноты">
-          <option value="4">1/1 (4)</option><option value="2">1/2</option>
-          <option value="1">1/4</option><option value="0.5" selected>1/8</option>
-          <option value="0.25">1/16</option><option value="0.125">1/32</option>
-        </select>
-      </div>
-      <div class="tg">
-        <span class="tl">Сетка</span>
-        <select id="sS" title="Привязка к сетке">
-          <option value="1">1 доля</option><option value="0.5">1/2</option>
-          <option value="0.25" selected>1/4</option><option value="0.125">1/8</option>
-          <option value="0.0625">1/16</option><option value="0">Выкл</option>
-        </select>
-      </div>
-      <div class="tg">
-        <span class="tl">Масштаб</span>
-        <button class="tb2 icob" id="zO" title="Уменьшить">−</button>
-        <button class="tb2 icob" id="zI" title="Увеличить">+</button>
-        <button class="tb2" id="zF" title="Показать весь трек">⤢ Весь</button>
-        <button class="tb2" id="zS" title="Показать выбранный диапазон нот">◈ Ноты</button>
-      </div>
-      <div class="tg" style="border:none;margin-left:auto;padding-right:0;">
-        <span class="tl" id="eI">нет нот</span>
-      </div>
+<!-- ================= MODAL ================= -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📤 Экспорт</h2>
+      <button class="modal-x" id="modalX" title="Закрыть">✕</button>
     </div>
-    <div class="ec"><canvas id="prC"></canvas></div>
-  </div>
-</div>
-
-<!-- ============ STATUS ============ -->
-<div class="sb">
-  <span class="l"><span class="ld" id="led"></span><span id="sL2">Готов. Загрузите MIDI или нажмите «Демо».</span></span>
-  <span class="r">
-    <span id="sBpm">BPM: —</span>
-    <span id="sSel">Выбор: —</span>
-    <span id="sTool">✏️ Рисовать</span>
-    <span>v2.1</span>
-  </span>
-</div>
-
-<!-- ============ MODAL ============ -->
-<div class="mb" id="mo">
-  <div class="md">
-    <div class="md-h"><h2 id="moT">📤 Экспорт</h2><button class="md-x" id="moX">✕</button></div>
-    <div class="md-b">
-      <div class="tbs" id="moTabs">
+    <div class="modal-body">
+      <label class="opt-row" id="asciiRow" title="Контроллеры (GRBL, LinuxCNC) могут не понимать не-ASCII символы даже в комментариях">
+        <input type="checkbox" id="optAscii" checked>
+        ASCII-комментарии (транслитерация — безопасно для GRBL / LinuxCNC)
+      </label>
+      <div class="tabs">
         <button class="tab on" data-tab="g">G-code (для ЧПУ)</button>
         <button class="tab" data-tab="t">Таблица скоростей</button>
         <button class="tab" data-tab="n">Карта нот (CSV)</button>
       </div>
-      <div class="gf" id="moB">—</div>
+      <div class="gfull" id="modalBody">—</div>
     </div>
-    <div class="md-f"><button class="btn" id="moC">📋 Копировать</button><button class="btn btn-p" id="moD">💾 Скачать</button></div>
+    <div class="modal-foot">
+      <button class="btn" id="btnCopy">📋 Копировать</button>
+      <button class="btn btn-primary" id="btnDl">💾 Скачать файл</button>
+    </div>
   </div>
 </div>
-
-<div class="mb" id="hp">
-  <div class="md" style="max-width:560px;">
-    <div class="md-h"><h2>❓ Справка и горячие клавиши</h2><button class="md-x" id="hpX">✕</button></div>
-    <div class="md-b">
-      <div style="font-size:10.5px;line-height:1.85;color:var(--tx2);margin-bottom:14px;">
-        <b style="color:var(--tx)">Принцип:</b> частота шаговых импульсов мотора = высота звука.
-        Ноте <b style="color:var(--ac)">C4</b> назначается пользовательская базовая скорость (шаг/сек),
-        остальные ноты вычисляются по формуле <b style="color:var(--ac)">C4 × 2^(полутонов/12)</b>.
-        Три оси (X, Y, Z) = три мотора = полифония до 3 нот.
-        В G-code частота шагов задаётся через подачу <b style="color:var(--y)">F</b>:
-        F = Hz × 60 ÷ (шагов/мм). Движение чередуется («пинг-понг») внутри области 200×200×200 мм.
-      </div>
-      <div class="hk">
-        <kbd>Space</kbd><span>Воспроизведение / пауза</span>
-        <kbd>Esc</kbd><span>Стоп · закрыть окно</span>
-        <kbd>B</kbd><span>Инструмент «Рисовать»</span>
-        <kbd>V</kbd><span>Инструмент «Выбор»</span>
-        <kbd>E</kbd><span>Инструмент «Стереть»</span>
-        <kbd>Delete</kbd><span>Удалить выбранную ноту</span>
-        <kbd>D</kbd><span>Дублировать выбранную ноту</span>
-        <kbd>← →</kbd><span>Сдвиг ноты по сетке</span>
-        <kbd>↑ ↓</kbd><span>Транспонирование на полутон</span>
-        <kbd>ЛКМ</kbd><span>Вставить / выбрать ноту</span>
-        <kbd>ПКМ</kbd><span>Удалить ноту под курсором</span>
-        <kbd>Край ноты</kbd><span>Изменить длительность</span>
-        <kbd>Колесо</kbd><span>Прокрутка по вертикали</span>
-        <kbd>Shift+колесо</kbd><span>Масштаб по времени</span>
-      </div>
-    </div>
-    <div class="md-f"><button class="btn btn-p" id="hpOk">Понятно</button></div>
-  </div>
-</div>
-
-<div id="tt"></div>
 
 <script>
-"use strict";
-/* =====================================================================
-   CNC STEPPER MUSIC EDITOR v2.1
-   ===================================================================== */
-const NN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const AX=['X','Y','Z'];
-const AXC=['#ff6b4a','#4aff8b','#4a9eff'];
-const m2f=m=>440*Math.pow(2,(m-69)/12);
-const m2n=m=>NN[((m%12)+12)%12]+(Math.floor(m/12)-1);
-const cl=(v,a,b)=>v<a?a:(v>b?b:v);
-const r3=v=>Math.round(v*1000)/1000;
-const $=id=>document.getElementById(id);
+/* ==========================================================================
+   CNC STEPPER MUSIC EDITOR — ядро (v2.3)
+   ========================================================================== */
+const NN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const AX = ['X','Y','Z'];
+const AXC = ['#ff6b4a','#4aff8b','#4a9eff'];
+const midiToFreq = m => 440*Math.pow(2,(m-69)/12);
+const midiToName = m => NN[((m%12)+12)%12] + (Math.floor(m/12)-1);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const r3 = v => Math.round(v*1000)/1000;
+const $ = id => document.getElementById(id);
 
-/* ----------------------------- STATE ----------------------------- */
-const S={
-  notes:[], nid:1, tempo:120, total:0, fname:'',
-  c4:261.63, spmm:80, area:[200,200,200], maxFeed:6000, minMove:0.05,
-  vol:.30, wave:'square', amode:'note', rate:1,
+/* ---------------- STATE ---------------- */
+const S = {
+  notes: [],
+  nextId: 1,
+  tempo: 120,
+  totalTime: 0,
+  maxDur: 1,
+  fileName: '',
+  c4Speed: 261.63,
+  spmm: 80,
+  area: [200,200,200],
+  maxFeed: 6000,
+  minMove: 0.05,
+  volume: 0.30,
+  wave: 'square',
+  audioMode: 'note',
+  speed: 1,
   playing:false, paused:false, t:0, t0:0, off:0,
-  active:[null,null,null], live:[], pi:0,
-  simPos:[100,100,100], simDir:[1,1,1],
-  ac:null, osc:[null,null,null], gn:[null,null,null],
-  gcode:[], gTxt:'', cTxt:'', tTxt:'', moves:0, mF:0, travel:[0,0,0], muted:0,
-  gcodeComments:true,   // ← НОВАЯ СТРОКА: показывать комментарии в G-code
-  lastFrame:0
-  
+  active:[null,null,null],
+  pos:[100,100,100], tgt:[100,100,100],
+  ac:null, osc:[null,null,null], gn:[null,null,null], blipOsc:null, blipGn:null,
+  gcodeRaw:[], gcode:[], gcodeText:'', csvText:'', tableText:'',
+  travel:[0,0,0], moves:0, maxFeedUsed:0, feedWarn:0
 };
-const motorHz =m=>S.c4*Math.pow(2,(m-60)/12);
-const motorMmS=m=>motorHz(m)/(S.spmm||1);
-const motorFeed=m=>motorMmS(m)*60;
 
-/* ----------------------------- TOAST ----------------------------- */
-function toast(msg,kind){
-  const w=$('tt'), d=document.createElement('div');
-  d.className='tt '+(kind||''); d.textContent=msg; w.appendChild(d);
-  setTimeout(()=>{d.style.transition='opacity .3s,transform .3s';d.style.opacity='0';d.style.transform='translateY(8px)';
-    setTimeout(()=>d.remove(),320);},2600);
-}
-function status(m){$('sL2').textContent=m;}
+function motorHz(midi){ return S.c4Speed * Math.pow(2,(midi-60)/12); }
+function motorMmS(midi){ return motorHz(midi)/S.spmm; }
+function motorFeed(midi){ return motorMmS(midi)*60; }
 
-/* =====================================================================
-   PIANO ROLL
-   ===================================================================== */
-const cv=$('prC'), cx=cv.getContext('2d');
-const KEYW=48, RUL=18, VSB=11, HSB=11;
-const PR={
-  pxSec:60, pxKey:13, scT:0, topP:84,
-  tool:'draw', brush:0, lenB:.5, snapB:.25, sel:null, hov:null, drag:null, sb:null
-};
-let CW=0, CH=0;                       // логические размеры канвы
-const beatS=()=>60/(S.tempo||120);
-const contentW=()=>Math.max(10,CW-KEYW-VSB);
-const contentH=()=>Math.max(10,CH-RUL-HSB);
-const tToX=t=>KEYW+(t-PR.scT)*PR.pxSec;
-const xToT=x=>PR.scT+(x-KEYW)/PR.pxSec;
-const pToY=m=>RUL+(PR.topP-m)*PR.pxKey;
-const yToP=y=>PR.topP-(y-RUL)/PR.pxKey;
-const viewT=()=>contentW()/PR.pxSec;
-const spanT=()=>Math.max(S.total*1.25+2, viewT()+1);
-const visKeys=()=>contentH()/PR.pxKey;
-
-function snapT(t){const s=PR.snapB*beatS();return s>0?Math.round(t/s)*s:Math.round(t*1000)/1000;}
-
-function clampScroll(){
-  PR.pxSec=cl(PR.pxSec,3,1200);
-  PR.scT=cl(PR.scT,0,Math.max(0,spanT()-viewT()));
-  PR.pxKey=cl(PR.pxKey,4,60);
-  const vk=visKeys();
-  PR.topP=cl(PR.topP,Math.min(vk,128),128);
-}
-
-/* --- канва: DPR-безопасное изменение размера (per-canvas storage) --- */
-function syncSize(c,ctx){
-  const r=c.parentElement.getBoundingClientRect();
-  const d=window.devicePixelRatio||1;
-  const w=Math.max(1,Math.floor(r.width)), h=Math.max(1,Math.floor(r.height));
-  if(w!==c._w||h!==c._h||c._d!==d){
-    c.width=Math.floor(w*d); c.height=Math.floor(h*d);
-    c.style.width=w+'px'; c.style.height=h+'px';
-    c._w=w; c._h=h; c._d=d;
+/* ---------------- Транслитерация ---------------- */
+const CYR = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
+             'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',
+             'х':'h','ц':'c','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+function toAscii(str){
+  let out='';
+  for(const ch of str){
+    const low=ch.toLowerCase();
+    if(CYR[low]!==undefined){
+      const t=CYR[low];
+      out += (ch===low) ? t : (t.charAt(0).toUpperCase()+t.slice(1));
+    } else if(ch.charCodeAt(0)<128){ out += ch; }
+    else out += '-';
   }
-  ctx.setTransform(d,0,0,d,0,0);
-  return {w,h};
+  return out;
 }
+const asciiWanted = ()=> $('optAscii') && $('optAscii').checked;
+
+/* ==========================================================================
+   PIANO ROLL
+   ========================================================================== */
+const prC = $('prCanvas');
+const prX = prC.getContext('2d');
+const KEYW = 46, RULER = 18;
+
+const PR = {
+  pxSec: 55,
+  pxKey: 13,
+  scrollT: 0,
+  topPitch: 86,
+  tool:'draw',
+  brush:0,
+  lenBeats:0.5,
+  snapBeats:0.25,
+  sel:null,
+  hover:null,
+  drag:null,
+  follow:true          // автопрокрутка за playhead
+};
+
+const beatSec = () => 60/(S.tempo||120);
+const tToX = t => (t - PR.scrollT)*PR.pxSec + KEYW;
+const xToT = x => PR.scrollT + (x - KEYW)/PR.pxSec;
+const pToY = m => RULER + (PR.topPitch - m)*PR.pxKey;
+const yToP = y => PR.topPitch - (y - RULER)/PR.pxKey;
+const snapT = t => {
+  const s = PR.snapBeats*beatSec();
+  return s>0 ? Math.round(t/s)*s : Math.round(t*1000)/1000;
+};
+
+/* бинарный поиск по отсортированному по start массиву — отсечение невидимых нот */
+function lowerBoundStart(t){
+  let lo=0,hi=S.notes.length;
+  while(lo<hi){const mid=(lo+hi)>>1; if(S.notes[mid].start<t) lo=mid+1; else hi=mid;}
+  return lo;
+}
+function upperBoundStart(t){
+  let lo=0,hi=S.notes.length;
+  while(lo<hi){const mid=(lo+hi)>>1; if(S.notes[mid].start<=t) lo=mid+1; else hi=mid;}
+  return lo;
+}
+
+function fitDPR(cv,ctx){
+  const d = window.devicePixelRatio||1;
+  const r = cv.parentElement.getBoundingClientRect();
+  const cw = Math.max(1,r.width), ch = Math.max(1,r.height);
+  const w = Math.round(cw*d), h = Math.round(ch*d);
+  if(cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  ctx.setTransform(d,0,0,d,0,0);
+  return {w:cw,h:ch};
+}
+
+function drawPianoRoll(){
+  const {w,h} = fitDPR(prC,prX);
+  const ctx = prX;
+  ctx.clearRect(0,0,w,h);
+  ctx.textBaseline='alphabetic';
+
+  const pitchTop = PR.topPitch;
+  const pitchBot = PR.topPitch - (h-RULER)/PR.pxKey;
+  const tEnd = xToT(w);
+
+  /* --- строки --- */
+  for(let m=Math.floor(pitchBot)-1;m<=pitchTop;m++){
+    const y=pToY(m);
+    if(y+PR.pxKey<RULER||y>h) continue;
+    const pc=((m%12)+12)%12;
+    const black=[1,3,6,8,10].indexOf(pc)>=0;
+    ctx.fillStyle = black ? '#0b1119' : '#121a24';
+    ctx.fillRect(KEYW,y,w-KEYW,PR.pxKey);
+    if(pc===0){
+      ctx.fillStyle='rgba(255,159,67,0.055)';
+      ctx.fillRect(KEYW,y,w-KEYW,PR.pxKey);
+    }
+    ctx.strokeStyle='rgba(42,52,68,0.55)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(KEYW,Math.round(y)+.5);ctx.lineTo(w,Math.round(y)+.5);ctx.stroke();
+  }
+
+  /* --- сетка долей --- */
+  const bs=beatSec();
+  const divs=[1/16,1/8,1/4,1/2,1,2,4,8];
+  let div=divs[divs.length-1];
+  for(let i=0;i<divs.length;i++){ if(divs[i]*bs*PR.pxSec>=11){div=divs[i];break;} }
+  const step=div*bs;
+  ctx.font='9px JetBrains Mono, monospace';
+  if(step>0 && isFinite(step)){
+    const tStart=Math.max(0,Math.floor(PR.scrollT/step)*step);
+    for(let t=tStart;t<=tEnd+step;t+=step){
+      const x=Math.round(tToX(t))+.5;
+      if(x<KEYW) continue;
+      const beatIdx=Math.round(t/bs);
+      const isBeat=Math.abs(t/bs-beatIdx)<1e-6;
+      const isBar=isBeat && (beatIdx%4===0);
+      ctx.strokeStyle = isBar?'rgba(255,159,67,0.30)': isBeat?'rgba(90,110,135,0.30)':'rgba(42,52,68,0.42)';
+      ctx.lineWidth = isBar?1.4:1;
+      ctx.beginPath();ctx.moveTo(x,RULER);ctx.lineTo(x,h);ctx.stroke();
+      if(isBar){
+        ctx.fillStyle='rgba(197,205,216,0.55)';
+        ctx.fillText('т.'+(beatIdx/4+1),x+3,12);
+      }
+    }
+  }
+
+  /* --- линейка времени --- */
+  ctx.fillStyle='#0d141d';ctx.fillRect(0,0,w,RULER);
+  const secStep = pickSecStep();
+  for(let t=Math.max(0,Math.floor(PR.scrollT/secStep)*secStep); t<=tEnd; t+=secStep){
+    const x=tToX(t); if(x<KEYW) continue;
+    ctx.fillStyle='rgba(122,134,148,0.75)';
+    ctx.fillText(fmtT(t),x+3,12);
+  }
+  ctx.strokeStyle='#2a3444';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,RULER-.5);ctx.lineTo(w,RULER-.5);ctx.stroke();
+
+  /* --- ноты (только видимый диапазон) --- */
+  const i0 = lowerBoundStart(PR.scrollT - S.maxDur - 1);
+  const i1 = upperBoundStart(tEnd);
+  const sndOn = S.playing || S.paused;
+  for(let i=i0;i<i1;i++){
+    const n=S.notes[i];
+    const x=tToX(n.start), x2=tToX(n.start+n.dur);
+    const y=pToY(n.midi);
+    if(x2<KEYW||x>w||y>h||y+PR.pxKey<RULER) continue;
+    const cx1=Math.max(x,KEYW), cw=Math.max(x2-cx1,2.5);
+    const ch=Math.max(PR.pxKey-2,3);
+    const yy=y+1;
+    const rad=Math.max(0,Math.min(3,ch/2,cw/2));
+    const isSel = PR.sel===n.id;
+    const isPlay = sndOn && S.t>=n.start && S.t<n.start+n.dur;
+    const col=AXC[n.axis]||AXC[0];
+
+    ctx.globalAlpha = isSel||isPlay ? 1 : .85;
+    if(ch>=7 && cw>=5){
+      const grad=ctx.createLinearGradient(0,yy,0,yy+ch);
+      grad.addColorStop(0,col);
+      grad.addColorStop(1,'rgba(0,0,0,0.45)');
+      ctx.fillStyle=grad;
+    } else ctx.fillStyle=col;
+    rr(ctx,cx1,yy,cw,ch,rad); ctx.fill();
+    ctx.globalAlpha=1;
+
+    if(isSel){
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.6;
+      rr(ctx,cx1-.5,yy-.5,cw+1,ch+1,rad); ctx.stroke();
+      if(cw>8){ ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fillRect(x2-3.5,yy+1,2.5,Math.max(ch-2,1)); }
+    } else if(isPlay){
+      ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.2;
+      rr(ctx,cx1,yy,cw,ch,rad); ctx.stroke();
+    } else {
+      ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=1;
+      rr(ctx,cx1,yy,cw,ch,rad); ctx.stroke();
+    }
+
+    if(cw>26 && ch>7){
+      ctx.fillStyle='rgba(0,0,0,.72)';
+      ctx.font='bold 8.5px JetBrains Mono, monospace';
+      ctx.fillText(midiToName(n.midi),cx1+3,yy+ch-2.5);
+      ctx.font='9px JetBrains Mono, monospace';
+    }
+  }
+
+  /* --- призрак новой ноты --- */
+  if(PR.hover && PR.hover.ghost && PR.tool==='draw' && !S.playing){
+    const g=PR.hover.ghost;
+    const x=tToX(g.start), x2=tToX(g.start+g.dur), y=pToY(g.midi);
+    const gw=Math.max(x2-x,2), gh=Math.max(PR.pxKey-2,3);
+    ctx.globalAlpha=.32; ctx.fillStyle=AXC[g.axis];
+    rr(ctx,Math.max(x,KEYW),y+1,gw,gh,3); ctx.fill();
+    ctx.globalAlpha=.9; ctx.strokeStyle=AXC[g.axis]; ctx.lineWidth=1;
+    ctx.setLineDash([3,3]);
+    rr(ctx,Math.max(x,KEYW),y+1,gw,gh,3); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=1;
+  }
+
+  /* --- клавиатура --- */
+  ctx.fillStyle='#131b25';ctx.fillRect(0,0,KEYW,h);
+  for(let m=Math.floor(pitchBot)-1;m<=pitchTop;m++){
+    const y=pToY(m); if(y+PR.pxKey<RULER||y>h) continue;
+    const pc=((m%12)+12)%12;
+    const black=[1,3,6,8,10].indexOf(pc)>=0;
+    ctx.fillStyle = black?'#1b2431':'#e6ebf2';
+    ctx.fillRect(0,y+1,KEYW-3,PR.pxKey-2);
+    if(black){ctx.fillStyle='#0a0e14';ctx.fillRect(0,y+1,KEYW-14,PR.pxKey-2);}
+    if(pc===0||PR.pxKey>=15){
+      ctx.fillStyle= black?'#8b97a6':'#3a4658';
+      ctx.font='8px JetBrains Mono, monospace';
+      ctx.fillText(midiToName(m),KEYW-24,y+PR.pxKey-3);
+    }
+    const an=S.active.find(a=>a&&a.midi===m);
+    if(an){ctx.fillStyle=AXC[an.axis];ctx.globalAlpha=.85;ctx.fillRect(0,y+1,KEYW-3,PR.pxKey-2);ctx.globalAlpha=1;}
+  }
+  ctx.strokeStyle='#2a3444';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(KEYW-.5,RULER);ctx.lineTo(KEYW-.5,h);ctx.stroke();
+  ctx.fillStyle='#0d141d';ctx.fillRect(0,0,KEYW,RULER);
+  ctx.strokeStyle='#2a3444';ctx.beginPath();ctx.moveTo(0,RULER-.5);ctx.lineTo(w,RULER-.5);ctx.stroke();
+
+  /* --- рамка удаления --- */
+  if(PR.drag && PR.drag.mode==='rect'){
+    const d = PR.drag;
+    const x = Math.min(d.x0,d.x1), y = Math.min(d.y0,d.y1);
+    const rw = Math.abs(d.x1-d.x0), rh = Math.abs(d.y1-d.y0);
+    if(rw>1||rh>1){
+      ctx.fillStyle='rgba(255,71,87,0.12)';ctx.fillRect(x,y,rw,rh);
+      ctx.strokeStyle='rgba(255,71,87,0.85)';ctx.lineWidth=1.5;
+      ctx.setLineDash([4,3]);ctx.strokeRect(x+.5,y+.5,rw,rh);ctx.setLineDash([]);
+    }
+  }
+
+  /* --- PLAYHEAD (рисуется каждый кадр) --- */
+  const px=tToX(S.t);
+  if(px>=KEYW-1 && px<=w){
+    ctx.save();
+    ctx.shadowColor='rgba(255,159,67,0.55)';ctx.shadowBlur=6;
+    ctx.strokeStyle='#ff9f43';ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(px,RULER);ctx.lineTo(px,h);ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle='#ff9f43';
+    ctx.beginPath();ctx.moveTo(px-5,RULER);ctx.lineTo(px+5,RULER);ctx.lineTo(px,RULER+7);ctx.closePath();ctx.fill();
+  }
+
+  /* --- подсказка --- */
+  ctx.fillStyle='rgba(122,134,148,0.4)';
+  ctx.font='9px JetBrains Mono, monospace';
+  ctx.fillText('C4 = '+S.c4Speed.toFixed(1)+' шаг/с · '+S.spmm+' шаг/мм · '+
+               S.area[0]+'×'+S.area[1]+'×'+S.area[2]+' мм',KEYW+8,h-6);
+}
+function pickSecStep(){
+  const cand=[0.1,0.25,0.5,1,2,5,10,15,30,60];
+  for(let i=0;i<cand.length;i++) if(cand[i]*PR.pxSec>=64) return cand[i];
+  return 60;
+}
+function fmtT(t){const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1);}
 function rr(c,x,y,w,h,r){
-  if(w<=0||h<=0)return;
-  r=Math.max(0,Math.min(r,w/2,h/2));
+  w=Math.max(0,w);h=Math.max(0,h);r=Math.max(0,Math.min(r,w/2,h/2));
   c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
   c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
   c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();
 }
-function fmtT(t){const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1);}
 
-function drawPR(){
-  const {w,h}=syncSize(cv,cx); CW=w; CH=h;
-  const c=cx; c.clearRect(0,0,w,h);
-  clampScroll();
-  const cW=contentW(), cH=contentH();
-  const pBot=PR.topP-cH/PR.pxKey, tEnd=xToT(KEYW+cW);
-
-  /* строки полутонов */
-  for(let m=Math.floor(pBot)-1;m<=Math.ceil(PR.topP);m++){
-    const y=pToY(m); if(y>RUL+cH||y+PR.pxKey<RUL)continue;
-    const pc=((m%12)+12)%12, bl=[1,3,6,8,10].includes(pc);
-    c.fillStyle=bl?'#0a1017':'#111a24';
-    c.fillRect(KEYW,y,cW,PR.pxKey);
-    if(pc===0){c.fillStyle='rgba(255,159,67,.055)';c.fillRect(KEYW,y,cW,PR.pxKey);}
-  }
-  /* горизонтальные линии */
-  c.strokeStyle='rgba(42,52,68,.5)';c.lineWidth=1;
-  for(let m=Math.floor(pBot)-1;m<=Math.ceil(PR.topP);m++){
-    const y=Math.round(pToY(m))+.5; if(y<RUL||y>RUL+cH)continue;
-    const pc=((m%12)+12)%12;
-    c.strokeStyle=pc===0?'rgba(255,159,67,.22)':'rgba(42,52,68,.55)';
-    c.beginPath();c.moveTo(KEYW,y);c.lineTo(KEYW+cW,y);c.stroke();
-  }
-
-  /* вертикальная сетка по долям */
-  const bs=beatS();
-  const dv=[1/32,1/16,1/8,1/4,1/2,1,2,4,8,16];
-  let d1=dv[dv.length-1];
-  for(const d of dv){ if(d*bs*PR.pxSec>=10){d1=d;break;} }
-  const stp=d1*bs, t0=Math.max(0,Math.floor(PR.scT/stp)*stp);
-  c.font='9px JetBrains Mono, monospace';
-  for(let t=stp;t<=tEnd;t+=stp){
-    const x=Math.round(tToX(t))+.5; if(x<KEYW||x>KEYW+cW)continue;
-    const bb=t/bs, isB=Math.abs(bb-Math.round(bb))<1e-6, isBr=isB&&Math.round(bb)%4===0;
-    c.strokeStyle=isBr?'rgba(255,159,67,.28)':isB?'rgba(96,116,142,.30)':'rgba(42,52,68,.42)';
-    c.lineWidth=isBr?1.4:1;
-    c.beginPath();c.moveTo(x,RUL);c.lineTo(x,RUL+cH);c.stroke();
-    if(isBr&&PR.pxSec>9){c.fillStyle='rgba(197,205,216,.5)';c.fillText('т.'+(Math.round(bb)/4+1),x+3,RUL+11);}
-  }
-
-  /* ноты */
-  c.save(); c.beginPath(); c.rect(KEYW,RUL,cW,cH); c.clip();
-  for(const n of S.notes){
-    const x1=tToX(n.start), x2=tToX(n.start+n.dur);
-    if(x2<KEYW||x1>KEYW+cW)continue;
-    const y=pToY(n.midi); if(y>RUL+cH||y+PR.pxKey<RUL)continue;
-    const ax=Math.max(x1,KEYW), aw=Math.max(x2-ax,2.5);
-    const ah=Math.max(PR.pxKey-2,2.5), ay=y+1;
-    const sel=PR.sel===n.id;
-    const ply=S.playing&&S.t>=n.start&&S.t<n.start+n.dur;
-
-    c.globalAlpha=n.muted?.34:(sel||ply?1:.86);
-    c.fillStyle=AXC[n.axis]; rr(c,ax,ay,aw,ah,Math.min(3,ah/2)); c.fill();
-    /* затемнение низа для объёма */
-    c.globalAlpha=(n.muted?.34:(sel||ply?1:.86))*.30; c.fillStyle='#000';
-    rr(c,ax,ay+ah*.55,aw,ah*.45,Math.min(3,ah/2)); c.fill();
-    c.globalAlpha=1;
-
-    if(n.muted){
-      c.save();c.beginPath();rr(c,ax,ay,aw,ah,Math.min(3,ah/2));c.clip();
-      c.strokeStyle='rgba(255,71,87,.55)';c.lineWidth=1;
-      for(let k=-ah;k<aw;k+=5){c.beginPath();c.moveTo(ax+k,ay+ah);c.lineTo(ax+k+ah,ay);c.stroke();}
-      c.restore();
-    }
-    c.strokeStyle=sel?'#ffffff':ply?'rgba(255,255,255,.75)':'rgba(0,0,0,.45)';
-    c.lineWidth=sel?1.8:1.1;
-    rr(c,ax+(sel?.4:0),ay+(sel?.4:0),aw-(sel?.8:0),ah-(sel?.8:0),Math.min(3,ah/2)); c.stroke();
-
-    if(sel){c.fillStyle='rgba(255,255,255,.92)';c.fillRect(x2-4,ay+1,3,Math.max(ah-2,1));}
-    if(aw>25&&ah>8){
-      c.fillStyle='rgba(0,0,0,.78)';c.font='bold 8.5px JetBrains Mono, monospace';
-      c.fillText(m2n(n.midi),ax+3,ay+ah-2.5);
-    }
-  }
-  /* призрак */
-  if(PR.hov&&PR.hov.ghost&&PR.tool==='draw'){
-    const g=PR.hov.ghost, gx1=tToX(g.start), gx2=tToX(g.start+g.dur), gy=pToY(g.midi);
-    const gaw=Math.max(gx2-gx1,2.5), gah=Math.max(PR.pxKey-2,2.5);
-    c.globalAlpha=.30;c.fillStyle=AXC[g.axis];rr(c,gx1,gy+1,gaw,gah,3);c.fill();
-    c.globalAlpha=.95;c.strokeStyle=AXC[g.axis];c.lineWidth=1;c.setLineDash([3,3]);
-    rr(c,gx1,gy+1,gaw,gah,3);c.stroke();c.setLineDash([]);c.globalAlpha=1;
-  }
-  /* playhead */
-  const px=tToX(S.t);
-  if(px>=KEYW&&px<=KEYW+cW){
-    c.strokeStyle='#ff9f43';c.lineWidth=1.6;
-    c.beginPath();c.moveTo(px,RUL);c.lineTo(px,RUL+cH);c.stroke();
-    c.fillStyle='#ff9f43';c.beginPath();
-    c.moveTo(px-5,RUL);c.lineTo(px+5,RUL);c.lineTo(px,RUL+7);c.closePath();c.fill();
-  }
-  c.restore();
-
-  /* линейка времени */
-  c.fillStyle='#0d141d';c.fillRect(0,0,w,RUL);
-  c.strokeStyle='#2a3444';c.lineWidth=1;
-  c.beginPath();c.moveTo(0,RUL-.5);c.lineTo(w,RUL-.5);c.stroke();
-  const cand=[.05,.1,.25,.5,1,2,5,10,15,30,60,120];
-  let ss=cand[cand.length-1];
-  for(const q of cand){ if(q*PR.pxSec>=62){ss=q;break;} }
-  c.font='9px JetBrains Mono, monospace';
-  for(let t=Math.max(0,Math.floor(PR.scT/ss)*ss);t<=tEnd;t+=ss){
-    const x=tToX(t); if(x<KEYW||x>KEYW+cW)continue;
-    c.fillStyle='rgba(122,134,148,.72)';c.fillText(fmtT(t),x+3,12);
-    c.strokeStyle='rgba(96,116,142,.4)';c.beginPath();c.moveTo(Math.round(x)+.5,RUL-4);c.lineTo(Math.round(x)+.5,RUL);c.stroke();
-  }
-
-  /* клавиатура */
-  c.fillStyle='#131b25';c.fillRect(0,RUL,KEYW,cH);
-  for(let m=Math.floor(pBot)-1;m<=Math.ceil(PR.topP);m++){
-    const y=pToY(m); if(y>RUL+cH||y+PR.pxKey<RUL)continue;
-    const pc=((m%12)+12)%12, bl=[1,3,6,8,10].includes(pc);
-    const act=S.active.find(a=>a&&a.midi===m);
-    c.fillStyle=act?AXC[act.axis]:(bl?'#1c2735':'#e6ebf2');
-    c.fillRect(0,y+1,KEYW-3,Math.max(PR.pxKey-2,1));
-    if(bl&&!act){c.fillStyle='#0a0e14';c.fillRect(0,y+1,KEYW-15,Math.max(PR.pxKey-2,1));}
-    if((pc===0||PR.pxKey>=14)&&!act){
-      c.fillStyle=bl?'#8b97a6':'#3a4658';c.font='8px JetBrains Mono, monospace';
-      c.fillText(m2n(m),KEYW-26,y+PR.pxKey-3);
-    }
-  }
-  c.fillStyle='#0d141d';c.fillRect(0,0,KEYW,RUL);
-  c.strokeStyle='#2a3444';c.beginPath();c.moveTo(KEYW-.5,RUL);c.lineTo(KEYW-.5,RUL+cH);c.stroke();
-
-  /* полосы прокрутки */
-  drawSB(c,KEYW,RUL+cH,cW,HSB,true);
-  drawSB(c,KEYW+cW,RUL,VSB,cH,false);
-
-  /* нижняя подпись */
-  c.fillStyle='rgba(122,134,148,.34)';c.font='9px JetBrains Mono, monospace';
-  c.fillText('C4='+S.c4.toFixed(1)+' шаг/с · '+S.spmm+' шаг/мм · область '+S.area.join('×')+' мм',KEYW+7,RUL+cH-5);
-}
-function drawSB(c,x,y,w,h,hor){
-  c.fillStyle='#0a0f16';c.fillRect(x,y,w,h);
-  c.strokeStyle='#222c3a';c.lineWidth=1;c.strokeRect(x+.5,y+.5,w-1,h-1);
-  if(hor){
-    const sp=spanT(), f=viewT()/sp;
-    if(f>=.999)return;
-    const tw=Math.max(24,w*f), tx=x+(w-tw)*(PR.scT/Math.max(1e-6,sp-viewT()));
-    c.fillStyle=PR.sb==='h'?'#5a6a7d':'#33414f';rr(c,tx,y+2,tw,h-4,3);c.fill();
-  }else{
-    const vk=visKeys(), sp=128;
-    if(vk>=sp)return;
-    const th=Math.max(24,h*(vk/sp)), den=sp-vk;
-    const frac=den>0?(sp-PR.topP)/den:0;
-    const ty=y+(h-th)*cl(frac,0,1);
-    c.fillStyle=PR.sb==='v'?'#5a6a7d':'#33414f';rr(c,x+2,ty,w-4,th,3);c.fill();
-  }
-}
-
-/* ---------- hit-тесты ---------- */
+/* ---------- hit test ---------- */
 function hitNote(mx,my){
-  for(let i=S.notes.length-1;i>=0;i--){
+  const t0=xToT(mx-2), t1=xToT(mx+2);
+  const i0=lowerBoundStart(t0-S.maxDur-0.1);
+  const i1=upperBoundStart(t1);
+  for(let i=i1-1;i>=i0;i--){
     const n=S.notes[i];
-    const x1=tToX(n.start),x2=tToX(n.start+n.dur),y=pToY(n.midi);
-    if(mx>=x1-2&&mx<=x2+2&&my>=y&&my<=y+PR.pxKey)
-      return {n,edge:(x2-mx)<7?'r':((mx-x1)<6?'l':'body')};
+    const x=tToX(n.start), x2=tToX(n.start+n.dur), y=pToY(n.midi);
+    if(mx>=x-2&&mx<=x2+2&&my>=y&&my<=y+PR.pxKey) return {n, edge:(x2-mx)<7?'r':((mx-x)<5?'l':'body')};
   }
   return null;
 }
-function freeAxis(st,du,ex){
+function freeAxisAt(start,dur,exclude){
   for(let a=0;a<3;a++){
     let ok=true;
-    for(const n of S.notes){ if(n.id===ex||n.axis!==a)continue;
-      if(st<n.start+n.dur-1e-6&&st+du>n.start+1e-6){ok=false;break;} }
-    if(ok)return a;
+    for(let i=0;i<S.notes.length;i++){
+      const n=S.notes[i];
+      if(n.id===exclude||n.axis!==a) continue;
+      if(start < n.start+n.dur-1e-6 && start+dur > n.start+1e-6){ok=false;break;}
+    }
+    if(ok) return a;
   }
   return -1;
 }
 
-cv.addEventListener('contextmenu',e=>{
+prC.addEventListener('contextmenu',e=>{
   e.preventDefault();
-  const r=cv.getBoundingClientRect(), h=hitNote(e.clientX-r.left,e.clientY-r.top);
-  if(h)delNote(h.n.id);
+  const r=prC.getBoundingClientRect();
+  const h=hitNote(e.clientX-r.left,e.clientY-r.top);
+  if(h){ deleteNote(h.n.id); }
 });
 
-cv.addEventListener('pointerdown',e=>{
-  /* fix: только ЛКМ инициирует drag/рисование/скролл */
-  if(e.button!==0)return;
-  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-  /* полосы прокрутки */
-  if(my>RUL+contentH()&&mx>=KEYW&&mx<=KEYW+contentW()){ PR.sb='h'; sbMove(mx,my); cv.setPointerCapture(e.pointerId); return; }
-  if(mx>KEYW+contentW()&&my>=RUL&&my<=RUL+contentH()){ PR.sb='v'; sbMove(mx,my); cv.setPointerCapture(e.pointerId); return; }
-  if(mx<KEYW){ /* вертикальная прокрутка колесом по клавиатуре */
-    PR.sb='k'; PR.kY=my; PR.kTop=PR.topP; cv.setPointerCapture(e.pointerId); return;
-  }
-  if(my<RUL)return;
+prC.addEventListener('mousedown',e=>{
+  if(e.button===2) return;
+  const r=prC.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  if(mx<KEYW) return;
+  if(my<RULER){ seekTo(xToT(mx)); return; }
   initAudio();
-  cv.setPointerCapture(e.pointerId);
   const hit=hitNote(mx,my);
 
-  if(PR.tool==='erase'){ if(hit){delNote(hit.n.id);} return; }
-  if(hit){
-    selNote(hit.n.id);
-    PR.drag={mode:hit.edge==='r'?'resize':(hit.edge==='l'?'lmove':'move'),n:hit.n,
-             t0:xToT(mx),p0:Math.round(yToP(my)),os:hit.n.start,od:hit.n.dur,om:hit.n.midi,moved:false};
+  if(PR.tool==='rect'){
+    PR.drag={mode:'rect', x0:mx, y0:my, x1:mx, y1:my};
     return;
   }
-  if(PR.tool==='draw'){
-    const midi=cl(Math.round(yToP(my)),0,127);
-    const st=Math.max(0,snapT(xToT(mx)));
-    const du=Math.max(.05,PR.lenB*beatS());
-    let ax=PR.brush>=0?PR.brush:freeAxis(st,du,null); if(ax<0)ax=0;
-    const n={id:S.nid++,midi,start:st,dur:du,axis:ax,vel:.8,locked:true,muted:false};
-    S.notes.push(n); sortNotes(); selNote(n.id);
-    PR.drag={mode:'create',n,t0:st,p0:midi,os:st,od:du,om:midi,moved:false};
-    onEdit(true); blip(n);
-  } else selNote(null);
-});
+  if(PR.tool==='erase'){ if(hit){ deleteNote(hit.n.id); drawPianoRoll(); } return; }
 
-function sbMove(mx,my){
-  if(PR.sb==='h'){
-    const sp=spanT(), f=viewT()/sp, w=contentW();
-    const tw=Math.max(24,w*f);
-    PR.scT=cl((mx-KEYW-tw/2)/Math.max(1,w-tw)*(sp-viewT()),0,Math.max(0,sp-viewT()));
-  }else if(PR.sb==='v'){
-    /* fix: инверсная формула к drawSB — topP = 128 - f*(128-vk) */
-    const vk=visKeys(), h=contentH(), th=Math.max(24,h*(vk/128));
-    const f=cl((my-RUL-th/2)/Math.max(1,h-th),0,1);
-    PR.topP=128-f*(128-vk);
-    PR.topP=cl(PR.topP,Math.min(vk,128),128);
-  }
-}
-
-window.addEventListener('pointermove',e=>{
-  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-  if(PR.sb){ sbMove(mx,my); if(PR.sb==='k'){ PR.topP=cl(PR.kTop+(PR.kY-my)/PR.pxKey,Math.min(visKeys(),128),128);} return; }
-  if(PR.drag){
-    const d=PR.drag,n=d.n,dt=xToT(mx)-d.t0;
-    d.moved=true;
-    if(d.mode==='move'){
-      n.start=Math.max(0,snapT(d.os+dt));
-      n.midi=cl(d.om+Math.round(yToP(my)-d.p0),0,127);
-    }else if(d.mode==='resize'){
-      n.dur=cl(snapT(d.od+dt),.05,600);
-    }else if(d.mode==='lmove'){
-      n.start=Math.max(0,snapT(d.os+dt)); n.dur=cl(d.od-dt,.05,600);
-    }else if(d.mode==='create'){
-      n.dur=cl(Math.max(snapT(xToT(mx))-n.start,.05),.05,600);
-    }
-    onEdit(true); updInsp(); return;
-  }
-  const inb=mx>=0&&my>=0&&mx<=r.width&&my<=r.height;
-  if(!inb){PR.hov=null;return;}
-  if(mx<KEYW||my<RUL){PR.hov=null;cv.style.cursor='default';return;}
-  const hit=hitNote(mx,my);
   if(hit){
-    cv.style.cursor=hit.edge==='r'||hit.edge==='l'?'ew-resize':'pointer';
-    PR.hov={n:hit.n};
-  }else if(PR.tool==='draw'){
-    cv.style.cursor='crosshair';
-    const midi=cl(Math.round(yToP(my)),0,127), st=Math.max(0,snapT(xToT(mx))), du=Math.max(.05,PR.lenB*beatS());
-    let ax=PR.brush>=0?PR.brush:freeAxis(st,du,null); if(ax<0)ax=0;
-    PR.hov={ghost:{midi,start:st,dur:du,axis:ax}};
-  }else{cv.style.cursor='default';PR.hov=null;}
-});
-window.addEventListener('pointerup',()=>{
-  /* fix: всегда полный refresh после drag — даже если moved=false (одиночный клик) */
-  if(PR.drag){PR.drag=null;onEdit(false);}
-  PR.sb=null;
-});
-cv.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
-  if(e.shiftKey||e.ctrlKey||e.metaKey){
-    const at=xToT(mx), f=e.deltaY<0?1.2:1/1.2;
-    PR.pxSec=cl(PR.pxSec*f,3,1200); clampScroll();
-    PR.scT=cl(at-(mx-KEYW)/PR.pxSec,0,Math.max(0,spanT()-viewT()));
-  }else if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){
-    PR.scT=cl(PR.scT+e.deltaX/PR.pxSec,0,Math.max(0,spanT()-viewT()));
-  }else{
-    /* fix: колесо вниз (deltaY>0) → прокрутка вниз (topP--) */
-    PR.topP=cl(PR.topP-Math.sign(e.deltaY)*Math.max(1,Math.round(28/PR.pxKey)),Math.min(visKeys(),128),128);
+    selectNote(hit.n.id);
+    if(PR.tool==='draw'||PR.tool==='select'){
+      PR.drag={mode:hit.edge==='r'?'resize':'move', note:hit.n,
+               t0:xToT(mx), p0:Math.round(yToP(my)), os:hit.n.start, od:hit.n.dur, om:hit.n.midi};
+      blipNote(hit.n);
+    }
+    return;
   }
-  clampScroll();
+
+  if(PR.tool==='draw'){
+    const midi=clamp(Math.round(yToP(my)),0,127);
+    const start=Math.max(0,snapT(xToT(mx)));
+    const dur=Math.max(0.05,(PR.lenBeats*beatSec()));
+    let axis = PR.brush>=0 ? PR.brush : freeAxisAt(start,dur,null);
+    if(axis<0) axis=0;
+    const n={id:S.nextId++,midi,start,dur,axis,vel:.8,locked:true};
+    S.notes.push(n); S.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);
+    selectNote(n.id);
+    PR.drag={mode:'create',note:n,t0:start,p0:midi,os:start,od:dur,om:midi};
+    onEdit(true);
+    blipNote(n);
+  } else {
+    selectNote(null);
+  }
+});
+
+window.addEventListener('mousemove',e=>{
+  const r=prC.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  const inside = mx>=0&&my>=0&&mx<=r.width&&my<=r.height;
+
+  if(PR.drag){
+    if(PR.drag.mode==='rect'){
+      PR.drag.x1 = clamp(mx,KEYW,r.width);
+      PR.drag.y1 = clamp(my,RULER,r.height);
+      drawPianoRoll();
+      return;
+    }
+    const d=PR.drag, n=d.note;
+    const dt=xToT(mx)-d.t0;
+    if(d.mode==='move'){
+      n.start=Math.max(0,r3(snapT(d.os+dt)));
+      n.midi=clamp(d.om+Math.round(yToP(my)-d.p0),0,127);
+      onEdit(true);
+    } else if(d.mode==='resize'){
+      n.dur=clamp(r3(snapT(d.od+dt)),0.05,600);
+      onEdit(true);
+    } else if(d.mode==='create'){
+      n.dur=clamp(r3(snapT(xToT(mx))-n.start),0.05,600);
+      onEdit(true);
+    }
+    updateInspector();
+    return;
+  }
+
+  if(!inside){ if(PR.hover){PR.hover=null;drawPianoRoll();} return; }
+  if(mx<KEYW){ if(PR.hover){PR.hover=null;} prC.style.cursor='default'; if(!S.playing)drawPianoRoll(); return; }
+  if(my<RULER){ if(PR.hover){PR.hover=null;} prC.style.cursor='pointer'; if(!S.playing)drawPianoRoll(); return; }
+
+  const hit=hitNote(mx,my);
+  let nextHover=null;
+  if(hit){
+    prC.style.cursor = (PR.tool==='erase') ? 'not-allowed' : (hit.edge==='r'?'ew-resize':'pointer');
+    nextHover={note:hit.n};
+  } else if(PR.tool==='draw'){
+    prC.style.cursor='crosshair';
+    const midi=clamp(Math.round(yToP(my)),0,127);
+    const start=Math.max(0,snapT(xToT(mx)));
+    const dur=Math.max(0.05,PR.lenBeats*beatSec());
+    let axis=PR.brush>=0?PR.brush:freeAxisAt(start,dur,null); if(axis<0)axis=0;
+    nextHover={ghost:{midi,start,dur,axis}};
+  } else {
+    prC.style.cursor = PR.tool==='rect' ? 'cell' : 'default';
+  }
+  const changed = JSON.stringify(nextHover)!==JSON.stringify(PR.hover);
+  PR.hover=nextHover;
+  if(changed && !S.playing) drawPianoRoll();
+});
+
+window.addEventListener('mouseup',()=>{
+  if(!PR.drag) return;
+  if(PR.drag.mode==='rect'){
+    const d = PR.drag;
+    const xMin = Math.min(d.x0,d.x1), xMax = Math.max(d.x0,d.x1);
+    const yMin = Math.min(d.y0,d.y1), yMax = Math.max(d.y0,d.y1);
+    const toDel = S.notes.filter(n=>{
+      const nx1 = tToX(n.start), nx2 = tToX(n.start+n.dur);
+      const ny  = pToY(n.midi);
+      return nx2 >= xMin && nx1 <= xMax && ny+PR.pxKey >= yMin && ny <= yMax;
+    });
+    PR.drag=null;
+    if(toDel.length){
+      const ids = new Set(toDel.map(n=>n.id));
+      S.notes = S.notes.filter(n=>!ids.has(n.id));
+      if(PR.sel!==null && ids.has(PR.sel)) selectNote(null);
+      setStatus('Удалено рамкой: '+toDel.length+' нот.');
+      onEdit(false);
+    } else {
+      setStatus('Рамка пуста — ничего не удалено.');
+      drawPianoRoll();
+    }
+    return;
+  }
+  PR.drag=null; onEdit(false);
+});
+
+prC.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=prC.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  if(e.shiftKey||e.ctrlKey||e.metaKey){
+    const tAt=xToT(mx);
+    const f=e.deltaY<0?1.18:1/1.18;
+    PR.pxSec=clamp(PR.pxSec*f,4,900);
+    PR.scrollT=Math.max(0,tAt-(mx-KEYW)/PR.pxSec);
+  } else if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){
+    PR.scrollT=Math.max(0,PR.scrollT+e.deltaX/PR.pxSec);
+  } else if(my>=RULER && my<r.height){
+    const lines = e.deltaMode===1 ? Math.max(1,Math.round(Math.abs(e.deltaY))) : Math.max(1,Math.round(Math.abs(e.deltaY)/40));
+    PR.topPitch=clamp(PR.topPitch+Math.sign(e.deltaY)*lines,20,127);
+  }
+  drawPianoRoll();
 },{passive:false});
 
-/* =====================================================================
+/* ==========================================================================
    ОПЕРАЦИИ С НОТАМИ
-   ===================================================================== */
-function sortNotes(){S.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi||a.id-b.id);}
-function selNote(id){
-  PR.sel=id; updInsp(); renderList();
-  const n=S.notes.find(x=>x.id===id);
-  $('sSel').textContent='Выбор: '+(n?m2n(n.midi)+' · '+AX[n.axis]:'—');
+   ========================================================================== */
+function selectNote(id){
+  PR.sel = (id===null||id===undefined) ? null : id;
+  updateInspector();
+  renderNoteList();
+  drawPianoRoll();
+  $('stSel').textContent='Выбрано: '+(PR.sel!==null?1:0);
 }
-function delNote(id){
-  const i=S.notes.findIndex(n=>n.id===id); if(i<0)return;
-  const nm=m2n(S.notes[i].midi);
+function deleteNote(id){
+  const i=S.notes.findIndex(n=>n.id===id);
+  if(i<0)return;
   S.notes.splice(i,1);
-  /* fix: при воспроизведении синхронизируем live/pi с удалённой нотой */
-  if(S.playing){
-    S.live=S.live.filter(x=>x.id!==id);
-    if(i<S.pi) S.pi--;
-    S.active=S.active.map(a=>a&&a.id===id?null:a);
-  }
-  if(PR.sel===id)selNote(null);
-  onEdit(false); toast('Нота '+nm+' удалена','wr');
+  if(PR.sel===id) selectNote(null);
+  onEdit(false);
 }
-function dupSel(){
+function duplicateSel(){
   const n=S.notes.find(x=>x.id===PR.sel); if(!n)return;
-  const c={...n,id:S.nid++,start:r3(n.start+n.dur),locked:true};
-  S.notes.push(c);sortNotes();selNote(c.id);onEdit(false);
+  const c={...n,id:S.nextId++,start:r3(n.start+n.dur),locked:true};
+  S.notes.push(c); S.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);
+  selectNote(c.id); onEdit(false);
+  setStatus('Нота #'+n.id+' продублирована.');
 }
-function autoAxes(){
-  if(!S.notes.length){toast('Нет нот для распределения','wr');return;}
-  const ends=[-1,-1,-1];
-  sortNotes();
+function autoAssignAxes(){
+  if(!S.notes.length) return;
+  const ends=[0,0,0];
+  let moved=0;
+  S.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);
   S.notes.forEach(n=>{
-    let a=-1;
-    for(let i=0;i<3;i++){ if(ends[i]<=n.start+1e-6){a=i;break;} }
-    if(a<0){ a=ends.indexOf(Math.min(...ends)); }
-    else { const pc=n.midi%3; if(ends[pc]<=n.start+1e-6)a=pc; }
-    n.axis=a; n.locked=true;
-    ends[a]=Math.max(ends[a],n.start+n.dur);
+    const pref=n.midi%3;
+    let best=-1;
+    if(ends[pref]<=n.start+1e-6) best=pref;
+    else{ for(let a=0;a<3;a++){ if(ends[a]<=n.start+1e-6){best=a;break;} } }
+    if(best<0){
+      best=0;
+      for(let a=1;a<3;a++) if(ends[a]<ends[best]) best=a;
+      const ns=r3(ends[best]+1e-4);
+      if(Math.abs(ns-n.start)>1e-6){ n.start=ns; moved++; }
+    }
+    n.axis=best; n.locked=true; ends[best]=n.start+n.dur;
   });
-  recompute(); onEdit(false);
-  toast('Оси перераспределены: X '+S.cnt[0]+' · Y '+S.cnt[1]+' · Z '+S.cnt[2]+(S.muted?' · подавлено '+S.muted:''),'ok');
-}
-function recompute(){
-  S.notes.forEach(n=>n.muted=false);
-  S.cnt=[0,0,0];
-  for(let a=0;a<3;a++){
-    const arr=S.notes.filter(n=>n.axis===a).sort((x,y)=>x.start-y.start);
-    S.cnt[a]=arr.length;
-    for(let i=1;i<arr.length;i++)
-      if(arr[i].start<arr[i-1].start+arr[i-1].dur-1e-6) arr[i].muted=true;
-  }
-  S.muted=S.notes.filter(n=>n.muted).length;
+  S.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);
+  onEdit(false);
+  setStatus('Оси перераспределены (полифония ≤ 3).'+(moved?' Сдвинуто из-за наложений: '+moved:''));
 }
 function clearAll(){
-  if(S.notes.length&&!confirm('Удалить все ноты и очистить проект?'))return;
-  stopPB(); S.notes=[]; PR.sel=null; S.fname=''; S.total=0;
-  $('fInf').style.display='none'; $('bGc').disabled=true;
-  selNote(null); onEdit(false); status('Проект очищен.'); toast('Проект очищен','wr');
+  if(S.notes.length && !confirm('Удалить все ноты?'))return;
+  stopPlayback();
+  S.notes=[]; S.fileName=''; S.gcodeRaw=[]; S.gcode=[]; S.gcodeText='';
+  S.csvText=''; S.tableText=''; S.moves=0; S.maxFeedUsed=0; S.feedWarn=0; S.travel=[0,0,0];
+  $('fileInfo').style.display='none';
+  $('fName').textContent='—'; $('fDur').textContent='—'; $('fNotes').textContent='—';
+  $('fTracks').textContent='—'; $('fTempo').textContent='—';
+  PR.sel=null;
+  buildGcode(); selectNote(null); recomputeTotals();
+  setStatus('Проект очищен.');
 }
-let eTmr=null;
+
+let editTimer=null;
 function onEdit(quick){
   recomputeTotals();
-  if(quick)return;
-  clearTimeout(eTmr);
-  eTmr=setTimeout(()=>{recompute();buildGcode();renderList();updStats();updInsp();renderTab();},50);
+  drawPianoRoll();
+  if(quick) return;
+  clearTimeout(editTimer);
+  editTimer=setTimeout(()=>{
+    buildGcode(); renderNoteList(); updateStats(); updateInspector(); renderSpeedTable();
+  },60);
 }
 function recomputeTotals(){
-  S.total=S.notes.length?Math.max(...S.notes.map(n=>n.start+n.dur)):0;
-  $('eI').textContent=S.notes.length
-    ? S.notes.length+' нот · '+S.total.toFixed(1)+' с · '+S.tempo.toFixed(0)+' BPM'+(S.muted?' · ⚠ '+S.muted:'')
-    : 'нет нот';
+  let t=0, md=0;
+  for(let i=0;i<S.notes.length;i++){
+    const n=S.notes[i];
+    const e=n.start+n.dur; if(e>t)t=e;
+    if(n.dur>md)md=n.dur;
+  }
+  S.totalTime=t; S.maxDur=Math.max(md,0.1);
+  $('edInfo').textContent =
+    S.notes.length ? (S.notes.length+' нот · '+t.toFixed(1)+' с · '+Math.round(S.tempo)+' BPM') : 'нет нот';
 }
+function minMidi(){let m=127;for(const n of S.notes)if(n.midi<m)m=n.midi;return S.notes.length?m:60;}
+function maxMidi(){let m=0;for(const n of S.notes)if(n.midi>m)m=n.midi;return S.notes.length?m:60;}
 
-/* =====================================================================
+/* ==========================================================================
    G-CODE
-   ===================================================================== */
-function getGcodeLines(){
-  if(S.gcodeComments) return S.gcode;
-  return S.gcode.map(l=>{
-    const i=l.indexOf(';');
-    return i>=0 ? l.substring(0,i).trimEnd() : l;
-  }).filter(l=>l.length>0);
-}
-
+   ========================================================================== */
 function buildGcode(){
-  const L=[], spmm=S.spmm||1, lim=S.area.slice();
-  const p0=[lim[0]/2,lim[1]/2,lim[2]/2];
-  const tr=[0,0,0];
-  let maxF=0, mv=0, warnF=0, bigDrift=false;
+  const L=[]; const spmm=S.spmm; const lim=S.area.slice();
+  const pos=[lim[0]/2,lim[1]/2,lim[2]/2]; const dir=[1,1,1];
+  const startPos=pos.slice();
+  const travel=[0,0,0];
+  let maxF=0, moves=0, warns=0;
 
-  L.push('%');
-  L.push('; ================================================================');
-  L.push(';   CNC STEPPER MUSIC — G-code');
-  L.push(';   Создан: '+new Date().toLocaleString('ru-RU'));
-  if(S.fname) L.push(';   Источник: '+S.fname);
-  L.push(';   Нот: '+S.notes.length+'   Время: '+S.total.toFixed(3)+' с   Темп: '+S.tempo.toFixed(1)+' BPM');
-  L.push('; ----------------------------------------------------------------');
-  L.push(';   ЭТАЛОН: C4 (MIDI 60) = '+S.c4.toFixed(2)+' шагов/сек');
-  L.push(';   Формула:  Hz(n) = '+S.c4.toFixed(2)+' * 2^((n-60)/12)');
-  L.push(';   Подача :  F[мм/мин] = Hz * 60 / ' + spmm);
-  L.push(';   Шаг/мм : '+spmm+'      Область: X'+lim[0]+' Y'+lim[1]+' Z'+lim[2]+' мм');
-  L.push(';   Полифония: до 3 нот (X/Y/Z одновременно)');
-  L.push(';   РЕВЕРС: каждая нота чередует направление: +, −, +, − ...');
-  L.push(';   Это удерживает мотор в пределах области без отскоков от границ.');
-  L.push(';   Режим координат: G91 (относительные, смещения от текущей точки).');
-  L.push('; ================================================================');
+  L.push('; ============================================================');
+  L.push(';  CNC STEPPER MUSIC  -  G-code');
+  L.push(';  Сгенерировано: '+new Date().toLocaleString('ru-RU'));
+  if(S.fileName) L.push(';  Источник: '+S.fileName);
+  L.push(';  Нот: '+S.notes.length+'   Длительность: '+S.totalTime.toFixed(3)+' с   Темп: '+Math.round(S.tempo)+' BPM');
+  L.push('; ------------------------------------------------------------');
+  L.push(';  Эталон: C4 = '+S.c4Speed.toFixed(2)+' шагов/сек (Гц)');
+  L.push(';  Формула скорости: Hz(n) = '+S.c4Speed.toFixed(2)+' * 2^((n-60)/12)');
+  L.push(';  Шагов/мм = '+spmm+'   ->   F[мм/мин] = Hz * 60 / '+spmm);
+  L.push(';  Рабочая область: X '+lim[0]+' · Y '+lim[1]+' · Z '+lim[2]+' мм');
+  L.push(';  Полифония: до 3 нот одновременно (X/Y/Z)');
+  L.push(';  Для нескольких осей F = 60 * |вектор| / dt');
+  L.push('; ============================================================');
   L.push('');
-  L.push('G21          ; миллиметры');
-  L.push('G90          ; абсолютные координаты (только для старта)');
-  L.push('G94          ; подача мм/мин');
-  L.push('G17          ; плоскость XY');
-  L.push('M5           ; шпиндель выкл');
-  L.push('M9           ; СОЖ выкл');
-  L.push('G0 X'+p0[0].toFixed(3)+' Y'+p0[1].toFixed(3)+' Z'+p0[2].toFixed(3)+'   ; старт — центр области');
-  L.push('G91          ; ОТНОСИТЕЛЬНЫЕ координаты (режим реверса)');
+  L.push('G21                ; единицы — миллиметры');
+  L.push('G90                ; абсолютные координаты');
+  L.push('G94                ; подача в мм/мин');
+  L.push('G17                ; плоскость XY');
+  L.push('M5                 ; шпиндель выкл (если есть)');
+  L.push('M9                 ; coolant off');
+  L.push('G0 X'+startPos[0].toFixed(3)+' Y'+startPos[1].toFixed(3)+' Z'+startPos[2].toFixed(3)+' ; старт в центре области');
   L.push('');
 
-  if(!S.notes.length){
-    L.push('; НОТ НЕТ — программа пустая');
-    L.push('G90          ; возврат в абсолютный режим');
-    L.push('M2           ; конец программы');
-    L.push('%');
-    S.gcode=L; S.gTxt=getGcodeLines().join('\n');
-    S.moves=0; S.mF=0; S.travel=[0,0,0]; S.warnF=0;
-    updGPre(); buildCsv(); buildTab(); return;
+  if(S.notes.length===0){
+    L.push('; НЕТ НОТ — пустая программа');
+    L.push('M2   ; конец программы');
+    finishGcode(L,0,0,[0,0,0],0);
+    return;
   }
 
-  /* --- временные границы --- */
   const ts=new Set([0]);
-  S.notes.forEach(n=>{ts.add(r3(n.start)); ts.add(r3(n.start+n.dur));});
-  let ar=[...ts].sort((a,b)=>a-b);
-  const mg=[ar[0]];
-  for(let i=1;i<ar.length;i++) if(ar[i]-mg[mg.length-1]>=.008) mg.push(ar[i]);
-  ar=mg;
+  S.notes.forEach(n=>{ ts.add(r3(n.start)); ts.add(r3(n.start+n.dur)); });
+  let arr=[...ts].sort((a,b)=>a-b);
+  const merged=[arr[0]];
+  for(let i=1;i<arr.length;i++) if(arr[i]-merged[merged.length-1]>=0.008) merged.push(arr[i]);
+  arr=merged;
+
+  const perAxis=[[],[],[]];
+  S.notes.forEach(n=>{ if(n.axis>=0&&n.axis<3) perAxis[n.axis].push(n); });
+  perAxis.forEach(list=>list.sort((a,b)=>a.start-b.start||a.midi-b.midi));
+  const ptr=[0,0,0];
   const EPS=1e-6;
-
-  /* --- состояние реверса --- */
-  const dir=[-1,-1,-1];              // -1 → первый note flip'ом даст +1
-  const lastNote=[null,null,null];
-  const cumulative=[0,0,0];
-
-  for(let i=0;i<ar.length-1;i++){
-    const t0=ar[i], t1=ar[i+1], dtF=t1-t0;
-    if(dtF<=EPS)continue;
-    const act=[null,null,null];
-    for(const n of S.notes){
-      if(n.start<=t0+EPS && n.start+n.dur>=t1-EPS){
-        if(!act[n.axis]||n.start<act[n.axis].start) act[n.axis]=n;
-      }
+  function activeOn(a,t0,t1){
+    const list=perAxis[a];
+    while(ptr[a]<list.length && list[ptr[a]].start+list[ptr[a]].dur < t0-EPS) ptr[a]++;
+    let best=null;
+    for(let k=ptr[a];k<list.length;k++){
+      const n=list[k];
+      if(n.start > t0+EPS) break;
+      if(n.start+n.dur >= t1-EPS){ if(!best || n.start<best.start) best=n; }
     }
-    if(!act[0]&&!act[1]&&!act[2])continue;
-
-    L.push('; -- t '+t0.toFixed(3)+' .. '+t1.toFixed(3)+' с  (dt '+dtF.toFixed(3)+' с) --');
-    for(let a=0;a<3;a++) if(act[a])
-      L.push(';    '+AX[a]+': '+m2n(act[a].midi)+' (MIDI '+act[a].midi+')  '+
-             motorHz(act[a].midi).toFixed(1)+' шаг/с');
-
-    /* Смена направления при старте новой ноты на оси */
-    for(let a=0;a<3;a++){
-      if(act[a] && act[a]!==lastNote[a]){
-        dir[a]*=-1;
-        lastNote[a]=act[a];
-      }
-    }
-
-    /* Один относительный ход на сегмент */
-    const d=[0,0,0];
-    let vec2=0;
-    for(let a=0;a<3;a++){
-      if(!act[a])continue;
-      d[a]=dir[a]*motorMmS(act[a].midi)*dtF;
-      vec2+=d[a]*d[a];
-    }
-    const vec=Math.sqrt(vec2);
-    if(vec<1e-5) continue;
-
-    const F=Math.round(vec/dtF*60);
-    if(F>maxF) maxF=F;
-    let cmd='G1';
-    for(let a=0;a<3;a++) if(Math.abs(d[a])>1e-5) cmd+=' '+AX[a]+d[a].toFixed(3);
-    cmd+=' F'+F;
-    if(F>S.maxFeed){cmd+='   ; ПРЕВЫШЕНИЕ лимита подачи '+S.maxFeed;warnF++;}
-    L.push(cmd); mv++;
-    for(let a=0;a<3;a++){ tr[a]+=Math.abs(d[a]); cumulative[a]+=d[a]; }
+    return best;
   }
 
-  /* --- возврат в центр --- */
+  for(let i=0;i<arr.length-1;i++){
+    const t0=arr[i], t1=arr[i+1];
+    const dtFull=t1-t0;
+    if(dtFull<=EPS) continue;
+    const act=[activeOn(0,t0,t1),activeOn(1,t0,t1),activeOn(2,t0,t1)];
+    if(!act[0]&&!act[1]&&!act[2]) continue;
+
+    L.push('; -- t='+t0.toFixed(3)+'..'+t1.toFixed(3)+'с ('+dtFull.toFixed(3)+'с) --');
+    act.forEach((n,a)=>{ if(n) L.push(';    '+AX[a]+': '+midiToName(n.midi)+' MIDI'+n.midi+' -> '+motorHz(n.midi).toFixed(1)+' шаг/с, F'+motorFeed(n.midi).toFixed(0)+' мм/мин'); });
+
+    let rem=dtFull, guard=0;
+    while(rem>EPS && guard++<400){
+      let sub=rem;
+      for(let a=0;a<3;a++){
+        if(!act[a])continue;
+        const v=motorMmS(act[a].midi);
+        if(v<=0)continue;
+        const avail = dir[a]>0 ? (lim[a]-pos[a]) : pos[a];
+        const tHit = Math.max(0,avail)/v;
+        if(tHit < sub-EPS) sub = tHit;
+      }
+      if(sub<=1e-9){
+        for(let a=0;a<3;a++){
+          if(!act[a])continue;
+          const avail = dir[a]>0 ? (lim[a]-pos[a]) : pos[a];
+          if(avail<=1e-6) dir[a]=-dir[a];
+        }
+        continue;
+      }
+      const d=[0,0,0];
+      for(let a=0;a<3;a++){
+        if(!act[a])continue;
+        d[a]=dir[a]*motorMmS(act[a].midi)*sub;
+        if(Math.abs(d[a])>0 && Math.abs(d[a])<S.minMove) d[a]=Math.sign(d[a])*S.minMove;
+        const npA = pos[a] + d[a];
+        if(npA < 0)           d[a] = -pos[a];
+        else if(npA > lim[a]) d[a] = lim[a] - pos[a];
+      }
+      const np=[pos[0]+d[0],pos[1]+d[1],pos[2]+d[2]];
+      const vec=Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);
+      if(vec>1e-5){
+        const F=Math.max(1,Math.round(vec/sub*60));
+        if(F>maxF)maxF=F;
+        let cmd='G1';
+        for(let a=0;a<3;a++) if(Math.abs(d[a])>1e-5) cmd+=' '+AX[a]+np[a].toFixed(3);
+        cmd+=' F'+F;
+        if(F>S.maxFeed){ cmd+='   ; ВНИМАНИЕ: подача выше лимита '+S.maxFeed; warns++; }
+        L.push(cmd);
+        moves++;
+        for(let a=0;a<3;a++) travel[a]+=Math.abs(d[a]);
+      }
+      pos[0]=np[0];pos[1]=np[1];pos[2]=np[2];
+      rem-=sub;
+      if(rem>EPS){
+        for(let a=0;a<3;a++){
+          if(!act[a])continue;
+          const avail = dir[a]>0 ? (lim[a]-pos[a]) : pos[a];
+          if(avail<=1e-6) dir[a]=-dir[a];
+        }
+      }
+    }
+  }
+
   L.push('');
-  L.push('; -- возврат в центр области --');
-  L.push('G90          ; возврат в абсолютный режим');
-  L.push('G0 X'+p0[0].toFixed(3)+' Y'+p0[1].toFixed(3)+' Z'+p0[2].toFixed(3));
-
-  /* --- проверка дрейфа --- */
-  const drift=Math.max(Math.abs(cumulative[0]),Math.abs(cumulative[1]),Math.abs(cumulative[2]));
-  const halfRange=Math.min(...lim)/2;
-  if(drift>halfRange-5) bigDrift=true;
-
-  L.push('; ----------------------------------------------------------------');
-  L.push('; Кадров G1: '+mv+'   Макс. подача: F'+maxF+' мм/мин');
-  L.push('; Полный ход: X '+tr[0].toFixed(1)+' мм · Y '+tr[1].toFixed(1)+' мм · Z '+tr[2].toFixed(1)+' мм');
-  L.push('; Накопленное смещение: X '+cumulative[0].toFixed(2)+' мм · Y '+cumulative[1].toFixed(2)+' мм · Z '+cumulative[2].toFixed(2)+' мм');
-  if(bigDrift) L.push('; ВНИМАНИЕ: возможен дрейф за пределы области! Скорректируйте C4 или длительности нот.');
-  if(warnF) L.push('; ВНИМАНИЕ: '+warnF+' кадров превышают установленный лимит подачи!');
-  if(S.muted) L.push('; ВНИМАНИЕ: '+S.muted+' нот подавлено (полифония > 3) — см. редактор');
-  L.push('; ================================================================');
-  L.push('M2           ; конец программы');
-  L.push('%');
-
-  S.gcode=L; S.gTxt=getGcodeLines().join('\n');
-  S.moves=mv; S.mF=maxF; S.travel=tr; S.warnF=warnF+(bigDrift?1:0);
-  updGPre(); updStats(); buildCsv(); buildTab();
+  L.push('; -- возврат в исходную точку --');
+  L.push('G0 X'+startPos[0].toFixed(3)+' Y'+startPos[1].toFixed(3)+' Z'+startPos[2].toFixed(3));
+  L.push('; ------------------------------------------------------------');
+  L.push('; Кадров движения: '+moves+'   Макс. подача: F'+maxF+' мм/мин');
+  if(warns) L.push('; ВНИМАНИЕ: '+warns+' кадров с подачей выше лимита '+S.maxFeed+' мм/мин');
+  L.push('; Полный ход: X '+travel[0].toFixed(1)+' · Y '+travel[1].toFixed(1)+' · Z '+travel[2].toFixed(1)+' мм');
+  L.push('; ============================================================');
+  L.push('M2   ; конец программы');
+  finishGcode(L,moves,maxF,travel,warns);
 }
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function hlG(s){
-  return s.split('\n').map(ln=>{
-    if(ln.trim()==='%')return '<span class="g">'+ln+'</span>';
-    if(ln.trim().startsWith(';'))return '<span class="c">'+esc(ln)+'</span>';
-    return esc(ln)
-      .replace(/\b(G0|G1|G2|G3|G4|G17|G21|G90|G92|G94|M2|M5|M9)\b/g,'<span class="g">$1</span>')
-      .replace(/\b([XYZ])(-?\d+\.?\d*)/g,'<span class="o">$1$2</span>')
-      .replace(/\b(F)(\d+)/g,'<span class="f">$1$2</span>')
-      .replace(/(ПРЕВЫШЕНИЕ[^\n]*)/g,'<span class="w">$1</span>');
+function finishGcode(L,moves,maxF,travel,warns){
+  S.gcodeRaw=L;
+  S.gcode = asciiWanted() ? L.map(toAscii) : L.slice();
+  S.gcodeText = S.gcode.join('\n');
+  S.moves=moves; S.maxFeedUsed=maxF; S.travel=travel; S.feedWarn=warns;
+  updateGcodePreview(); updateStats(); buildCsv(); buildTable();
+  if($('modal').classList.contains('on') && modalTab==='g') paintModal();
+}
+function hl(s){
+  return s.split('\n').map(line=>{
+    const t=line.trim();
+    if(t.startsWith(';')){
+      const cls = /ВНИМАНИЕ|WARNING/.test(line) ? 'w' : 'c';
+      return '<span class="'+cls+'">'+esc(line)+'</span>';
+    }
+    return esc(line)
+      .replace(/\b(G0|G1|G2|G3|G4|G17|G21|G90|G94|G92|M2|M5|M9)\b/g,'<span class="g">$1</span>')
+      .replace(/\b([XYZ])(-?\d+\.?\d*)/g,'<span class="co">$1$2</span>')
+      .replace(/\b(F)(\d+)/g,'<span class="f">$1$2</span>');
   }).join('\n');
 }
-function updGPre(){
-  const body=S.gcode.slice(0,40).join('\n');
-  $('gP').innerHTML=hlG(body)+(S.gcode.length>40?'\n<span class="c">; … ещё '+(S.gcode.length-40)+' строк — «Открыть»</span>':'');
-  $('qG').textContent=S.moves;
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function updateGcodePreview(){
+  const el=$('gPre');
+  const src=S.gcode.length?S.gcode:['; Загрузите MIDI или добавьте ноты'];
+  const body=src.slice(0,42).join('\n');
+  el.innerHTML=hl(body)+(src.length>42?'\n<span class="c">; ... ещё '+(src.length-42)+' строк — см. «Экспорт G-code»</span>':'');
+  $('stGcode').textContent=S.moves||0;
 }
 function buildCsv(){
-  let c='Note;MIDI;NoteFreq_Hz;MotorStepsPerSec;Feed_mm_min;Speed_mm_s;Travel_mm;Start_s;Duration_s;Axis;Muted\n';
+  let c='\ufeffNote;MIDI;Frequency_Hz;MotorStepsPerSec;Feed_mm_min;Travel_mm;Start_s;Duration_s;Axis\n';
   S.notes.forEach(n=>{
-    c+=[m2n(n.midi),n.midi,m2f(n.midi).toFixed(2),motorHz(n.midi).toFixed(2),
-        motorFeed(n.midi).toFixed(1),motorMmS(n.midi).toFixed(4),
-        (motorMmS(n.midi)*n.dur).toFixed(4),n.start.toFixed(4),n.dur.toFixed(4),AX[n.axis],n.muted?1:0].join(';')+'\n';
+    c+=[midiToName(n.midi),n.midi,midiToFreq(n.midi).toFixed(2),motorHz(n.midi).toFixed(2),
+        motorFeed(n.midi).toFixed(1),(motorMmS(n.midi)*n.dur).toFixed(3),
+        n.start.toFixed(4),n.dur.toFixed(4),AX[n.axis]].join(';')+'\n';
   });
-  S.cTxt=c;
+  S.csvText=c;
 }
-function buildTab(){
-  let t='СКОРОСТИ МОТОРОВ ОТНОСИТЕЛЬНО ЭТАЛОНА C4 = '+S.c4.toFixed(2)+' шаг/с\n';
-  t+='Шагов/мм: '+S.spmm+'    Область: '+S.area.join(' x ')+' мм\n';
-  t+='Формула: Hz(n) = C4 * 2^((n-60)/12)     F = Hz*60/(шаг/мм)\n\n';
-  t+='Нота    MIDI   Звук,Гц   Мотор,шаг/с   F,мм/мин   мм/с      мм за 1с\n';
-  t+='------  ----  --------  -----------  ---------  --------  ---------\n';
+function buildTable(){
+  let t='Скорость мотора относительно эталона C4 = '+S.c4Speed.toFixed(2)+' шаг/с\n';
+  t+='Шагов/мм: '+S.spmm+'\n\n';
+  t+='Нота     MIDI   Гц(звук)   шаг/с     F мм/мин   мм/с\n';
+  t+='-------  ----  ---------  --------  ---------  ------\n';
   for(let m=24;m<=108;m++){
-    const pc=((m%12)+12)%12;
-    if(![0,7,4,9,2].includes(pc))continue;
+    const pc=m%12;
+    if(pc!==0 && pc!==7 && pc!==4) continue;
     const hz=motorHz(m);
-    t+=m2n(m).padEnd(7)+' '+String(m).padEnd(5)+' '+m2f(m).toFixed(2).padStart(8)+'  '+
-       hz.toFixed(1).padStart(11)+'  '+motorFeed(m).toFixed(0).padStart(9)+'  '+
-       motorMmS(m).toFixed(3).padStart(8)+'  '+motorMmS(m).toFixed(3).padStart(9)+(m===60?'   <-- ЭТАЛОН':'')+'\n';
+    t+=midiToName(m).padEnd(8)+' '+String(m).padEnd(5)+' '+
+       midiToFreq(m).toFixed(2).padStart(9)+'  '+hz.toFixed(1).padStart(8)+'  '+
+       motorFeed(m).toFixed(0).padStart(9)+'  '+motorMmS(m).toFixed(3).padStart(6)+'\n';
   }
-  S.tTxt=t;
-}
-function renderTab(){
-  let h='';
-  for(let o=7;o>=0;o--){
-    const m=(o+1)*12; if(m>127)continue;
-    h+='<div class="st-r'+(m===60?' hl':'')+'"><span class="n">'+m2n(m)+' · MIDI '+m+'</span><span class="s">'+motorHz(m).toFixed(1)+' шаг/с · F'+motorFeed(m).toFixed(0)+'</span></div>';
-  }
-  $('sTab').innerHTML=h;
+  S.tableText=t;
 }
 
-/* =====================================================================
-   СПИСКИ / СТАТИСТИКА / ИНСПЕКТОР
-   ===================================================================== */
-function renderList(){
-  const el=$('nL');
-  if(!S.notes.length){el.innerHTML='<div class="ie">Нет нот — кликните по нотному стану,<br>чтобы вставить первую</div>';return;}
-  const sh=S.notes.slice(0,500);
-  el.innerHTML=sh.map(n=>
-    '<div class="ni'+(PR.sel===n.id?' sel':'')+(n.muted?' mut':'')+'" data-id="'+n.id+'">'+
-    '<span class="dt a'+n.axis+'"></span>'+
-    '<span class="nn">'+m2n(n.midi)+'</span>'+
-    '<span class="nf">'+motorHz(n.midi).toFixed(0)+' ш/с</span>'+
-    '<span class="nd">'+(n.dur*1000).toFixed(0)+'мс</span>'+
-    '<span class="nt">'+n.start.toFixed(2)+'с</span>'+
-    '<span class="nx" data-del="'+n.id+'" title="Удалить">✕</span></div>').join('')
-    +(S.notes.length>500?'<div class="ie">…ещё '+(S.notes.length-500)+'</div>':'');
+/* ==========================================================================
+   СПИСОК / СТАТИСТИКА / ИНСПЕКТОР
+   ========================================================================== */
+let noteEls=new Map();
+let lastPlaying=new Set();
+
+function renderNoteList(){
+  const el=$('noteList');
+  if(!S.notes.length){el.innerHTML='<div class="insp-empty">Нет нот — добавьте на нотный стан</div>';noteEls=new Map();lastPlaying=new Set();return;}
+  const CAP=400;
+  const show=S.notes.slice(0,CAP);
+  el.innerHTML=show.map(n=>
+    '<div class="note-item '+(PR.sel===n.id?'sel':'')+'" data-id="'+n.id+'">'+
+      '<span class="dot a'+n.axis+'"></span>'+
+      '<span class="nn">'+midiToName(n.midi)+'</span>'+
+      '<span class="nf">'+motorHz(n.midi).toFixed(0)+' ш/с</span>'+
+      '<span class="nd">'+(n.dur*1000).toFixed(0)+'мс</span>'+
+      '<span class="nt">'+n.start.toFixed(2)+'с</span>'+
+      '<span class="nx" data-del="'+n.id+'" title="Удалить">✕</span>'+
+    '</div>').join('') + (S.notes.length>CAP?'<div class="insp-empty">…ещё '+(S.notes.length-CAP)+'</div>':'');
+  noteEls=new Map();
+  el.querySelectorAll('.note-item').forEach(x=>noteEls.set(+x.dataset.id,x));
+  lastPlaying=new Set();
 }
-$('nL').addEventListener('click',e=>{
-  const d=e.target.dataset.del;
-  if(d){e.stopPropagation();delNote(+d);return;}
-  const it=e.target.closest('.ni');
-  if(it){const n=S.notes.find(x=>x.id===+it.dataset.id);
-    if(n){selNote(n.id);scrollToT(n.start);}}
+$('noteList').addEventListener('click',e=>{
+  const del=e.target.dataset.del;
+  if(del){deleteNote(+del);return;}
+  const it=e.target.closest('.note-item');
+  if(it){
+    const n=S.notes.find(x=>x.id===+it.dataset.id);
+    if(n){selectNote(n.id); scrollTimeTo(n.start);}
+  }
 });
-function updStats(){
-  $('qN').textContent=S.notes.length;
-  $('qD').textContent=S.total.toFixed(1);
-  if(S.notes.length){
-    const a=S.notes.map(n=>n.midi);
-    $('qR').textContent=m2n(Math.min(...a))+'–'+m2n(Math.max(...a));
-  }else $('qR').textContent='—';
-  const c=S.cnt||[0,0,0];
-  $('qX').textContent=c[0];$('qY').textContent=c[1];$('qZ').textContent=c[2];
-  $('qM').textContent=S.muted||0;
-  $('kMut').textContent=S.muted||0;
-  $('qF').textContent='F'+(S.mF||0)+(S.warnF?' ⚠':'');
-  $('qF').className='v'+(S.warnF?' wr':'');
-  $('qT').textContent=(S.travel||[0,0,0]).map(v=>v.toFixed(0)).join(' / ')+' мм';
-  $('sBpm').textContent='BPM: '+S.tempo.toFixed(0);
+function updateStats(){
+  $('stNotes').textContent=S.notes.length;
+  $('stDur').textContent=S.totalTime.toFixed(1);
+  $('stRange').textContent = S.notes.length ? (midiToName(minMidi())+'–'+midiToName(maxMidi())) : '—';
+  const c=[0,0,0]; S.notes.forEach(n=>{ if(n.axis>=0&&n.axis<3) c[n.axis]++; });
+  $('stX').textContent=c[0]; $('stY').textContent=c[1]; $('stZ').textContent=c[2];
+  $('stMaxF').textContent='F'+(S.maxFeedUsed||0);
+  $('stTravel').textContent=(S.travel||[0,0,0]).map(v=>v.toFixed(0)).join(' / ')+' мм';
+  const wEl=$('stWarn');
+  wEl.textContent=S.feedWarn||0;
+  wEl.style.color=(S.feedWarn>0)?'var(--danger)':'var(--text)';
+  $('stBpm').textContent='BPM: '+Math.round(S.tempo);
+  $('btnGcode').disabled = S.notes.length===0;
 }
-(function(){let h='';for(let m=127;m>=0;m--)h+='<option value="'+m+'">'+m2n(m)+' · '+m+'</option>';$('eP').innerHTML=h;})();
-
-function updInsp(){
+(function(){
+  const s=$('ePitch');
+  let h='';
+  for(let m=127;m>=0;m--) h+='<option value="'+m+'">'+midiToName(m)+' ('+m+')</option>';
+  s.innerHTML=h;
+})();
+function updateInspector(){
   const n=S.notes.find(x=>x.id===PR.sel);
-  if(!n){$('iE').style.display='block';$('iB').style.display='none';return;}
-  $('iE').style.display='none';$('iB').style.display='block';
-  $('eP').value=n.midi;
-  $('eS').value=n.start.toFixed(3);
-  $('eD').value=n.dur.toFixed(3);
-  document.querySelectorAll('#eA button').forEach(b=>b.classList.toggle('on',+b.dataset.a===n.axis));
-  $('rF').textContent=m2f(n.midi).toFixed(2)+' Гц';
-  $('rS').textContent=motorHz(n.midi).toFixed(1)+' шаг/с';
-  $('rFd').textContent='F'+motorFeed(n.midi).toFixed(0)+' мм/мин';
-  $('rDs').textContent=(motorMmS(n.midi)*n.dur).toFixed(3)+' мм';
-  $('rSt').textContent=n.muted?'⚠ подавлено (ось занята)':'✓ звучит';
-  $('rSt').className='v '+(n.muted?'wr':'ok');
+  const empty=$('inspEmpty'), body=$('inspBody');
+  if(!n){empty.style.display='block';body.style.display='none';$('inspId').textContent='';return;}
+  empty.style.display='none';body.style.display='block';
+  $('inspId').textContent='#'+n.id+' · '+AX[n.axis];
+  if($('ePitch').value!==String(n.midi)) $('ePitch').value=n.midi;
+  $('eStart').value=n.start.toFixed(3);
+  $('eDur').value=n.dur.toFixed(3);
+  document.querySelectorAll('#eAxis button').forEach(b=>b.classList.toggle('on',+b.dataset.a===n.axis));
+  $('eFreq').textContent=midiToFreq(n.midi).toFixed(2)+' Гц';
+  $('eSpeed').textContent=motorHz(n.midi).toFixed(1)+' шаг/с';
+  const f=motorFeed(n.midi), fEl=$('eFeed');
+  fEl.textContent='F'+f.toFixed(0)+' мм/мин'+(f>S.maxFeed?' ⚠':'');
+  fEl.classList.toggle('over',f>S.maxFeed);
+  $('eDist').textContent=(motorMmS(n.midi)*n.dur).toFixed(3)+' мм';
 }
-$('eP').addEventListener('change',e=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.midi=cl(+e.target.value|0,0,127);sortNotes();onEdit(false);});
-$('eS').addEventListener('change',e=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.start=Math.max(0,parseFloat(e.target.value)||0);sortNotes();onEdit(false);});
-$('eD').addEventListener('change',e=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.dur=cl(parseFloat(e.target.value)||.1,.05,600);onEdit(false);});
-document.querySelectorAll('#eA button').forEach(b=>b.addEventListener('click',()=>{
-  const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.axis=+b.dataset.a;n.locked=true;onEdit(false);}));
-$('eDe').addEventListener('click',()=>{if(PR.sel)delNote(PR.sel);});
-$('eDu').addEventListener('click',dupSel);
-$('eOc').addEventListener('click',()=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.midi=cl(n.midi+12,0,127);onEdit(false);});
-$('eOd').addEventListener('click',()=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.midi=cl(n.midi-12,0,127);onEdit(false);});
+$('ePitch').addEventListener('change',e=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.midi=clamp(+e.target.value||60,0,127);S.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);onEdit(false);});
+$('eStart').addEventListener('change',e=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.start=Math.max(0,parseFloat(e.target.value)||0);S.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);onEdit(false);});
+$('eDur').addEventListener('change',e=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.dur=clamp(parseFloat(e.target.value)||0.1,0.05,600);onEdit(false);});
+document.querySelectorAll('#eAxis button').forEach(b=>b.addEventListener('click',()=>{const n=S.notes.find(x=>x.id===PR.sel);if(!n)return;n.axis=+b.dataset.a;n.locked=true;onEdit(false);}));
+$('eDel').addEventListener('click',()=>{if(PR.sel!==null)deleteNote(PR.sel);});
+$('eDup').addEventListener('click',duplicateSel);
 
-/* =====================================================================
+function renderSpeedTable(){
+  const el=$('speedTable');
+  let h='';
+  for(let oct=6;oct>=1;oct--){
+    const m=(oct+1)*12;
+    const hz=motorHz(m);
+    h+='<div class="speed-row '+(m===60?'hl':'')+'"><span class="n">'+midiToName(m)+' ('+m+')</span><span class="s">'+hz.toFixed(1)+' шаг/с · F'+motorFeed(m).toFixed(0)+'</span></div>';
+  }
+  el.innerHTML=h;
+}
+
+/* ==========================================================================
    AUDIO
-   ===================================================================== */
+   ========================================================================== */
 function initAudio(){
   try{
     if(!S.ac) S.ac=new (window.AudioContext||window.webkitAudioContext)();
     if(S.ac.state==='suspended') S.ac.resume();
-  }catch(e){console.warn('Audio недоступен',e);}
+  }catch(err){ console.warn('Audio недоступен:',err); }
 }
 function ensureOsc(a){
   if(!S.ac||S.osc[a])return;
-  try{
-    const o=S.ac.createOscillator(),g=S.ac.createGain();
-    o.type=S.wave;o.frequency.value=110;g.gain.value=0;
-    o.connect(g);g.connect(S.ac.destination);o.start();
-    S.osc[a]=o;S.gn[a]=g;
-  }catch(e){}
+  const o=S.ac.createOscillator(), g=S.ac.createGain();
+  o.type=S.wave;o.frequency.value=55;g.gain.value=0;
+  o.connect(g);g.connect(S.ac.destination);o.start();
+  S.osc[a]=o;S.gn[a]=g;
 }
-function nOn(a,f){
+function noteOn(a,f){
   if(!S.ac)return; ensureOsc(a); if(!S.osc[a])return;
+  S.osc[a].type=S.wave;
+  S.osc[a].frequency.setTargetAtTime(clamp(f,20,15000),S.ac.currentTime,0.008);
+  S.gn[a].gain.setTargetAtTime(S.volume*0.14,S.ac.currentTime,0.008);
+}
+function noteOff(a){ if(S.ac&&S.gn[a]) S.gn[a].gain.setTargetAtTime(0,S.ac.currentTime,0.02); }
+function applyVolumeLive(){
+  if(!S.ac)return;
+  for(let i=0;i<3;i++){ if(S.gn[i]&&S.active[i]) S.gn[i].gain.setTargetAtTime(S.volume*0.14,S.ac.currentTime,0.02); }
+}
+function killAudio(){
+  for(let i=0;i<3;i++){ if(S.osc[i]){try{S.osc[i].stop();}catch(e){} S.osc[i]=null;S.gn[i]=null;} }
+}
+function blipNote(n){
+  initAudio(); if(!S.ac)return;
   try{
-    S.osc[a].type=S.wave;
-    S.osc[a].frequency.setTargetAtTime(cl(f,18,16000),S.ac.currentTime,.006);
-    S.gn[a].gain.setTargetAtTime(S.vol*.13,S.ac.currentTime,.006);
-  }catch(e){}
-}
-function nOff(a){ if(S.gn[a])try{S.gn[a].gain.setTargetAtTime(0,S.ac.currentTime,.018);}catch(e){} }
-function killAudio(){ for(let i=0;i<3;i++){ if(S.osc[i]){try{S.osc[i].stop();}catch(e){} S.osc[i]=null;S.gn[i]=null;} } }
-let blipT=null;
-function blip(n){
-  initAudio(); if(!S.ac||S.playing)return;
-  nOn(0,S.amode==='motor'?motorHz(n.midi):m2f(n.midi));
-  clearTimeout(blipT); blipT=setTimeout(()=>nOff(0),110);
+    if(S.blipOsc){ try{S.blipOsc.stop();}catch(e){} S.blipOsc=null;S.blipGn=null; }
+    const o=S.ac.createOscillator(), g=S.ac.createGain();
+    o.type=S.wave;
+    o.frequency.value=clamp(S.audioMode==='motor'?motorHz(n.midi):midiToFreq(n.midi),20,15000);
+    g.gain.value=0;
+    o.connect(g);g.connect(S.ac.destination);o.start();
+    const t=S.ac.currentTime;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(S.volume*0.16,t+0.01);
+    g.gain.setTargetAtTime(0,t+0.06,0.03);
+    S.blipOsc=o;S.blipGn=g;
+    setTimeout(()=>{ try{o.stop();}catch(e){} if(S.blipOsc===o){S.blipOsc=null;S.blipGn=null;} },220);
+  }catch(e){/* noop */}
 }
 
-/* =====================================================================
-   PLAYBACK  (+ точная симуляция движения осей как в G-code)
-   ===================================================================== */
-function resetHead(){ S.pi=0; S.live=[]; }
-function updActive(t){
-  while(S.pi<S.notes.length&&S.notes[S.pi].start<=t){S.live.push(S.notes[S.pi]);S.pi++;}
-  if(S.live.length){
-    const keep=[];
-    for(const n of S.live) if(n.start+n.dur>t) keep.push(n);
-    S.live=keep;
-  }
-  const na=[null,null,null];
-  for(const n of S.live){ if(n.muted)continue; if(!na[n.axis]||n.start<na[n.axis].start) na[n.axis]=n; }
-  for(let a=0;a<3;a++){
-    if(na[a]!==S.active[a]){
-      if(na[a]) nOn(a, S.amode==='motor'?motorHz(na[a].midi):m2f(na[a].midi));
-      else nOff(a);
-      S.active[a]=na[a];
-    }
-  }
-}
-function simMove(dt){
-  for(let a=0;a<3;a++){
-    const n=S.active[a]; if(!n)continue;
-    let mv=motorMmS(n.midi)*dt, g=0;
-    while(mv>1e-9&&g++<10){
-      const av=S.simDir[a]>0?(S.area[a]-S.simPos[a]):S.simPos[a];
-      if(mv<=av){S.simPos[a]+=S.simDir[a]*mv;mv=0;}
-      else{S.simPos[a]=cl(S.simPos[a]+S.simDir[a]*av,0,S.area[a]);mv-=av;S.simDir[a]*=-1;}
-    }
-    S.simPos[a]=cl(S.simPos[a],0,S.area[a]);
-  }
-}
-function startPB(){
-  if(!S.notes.length){toast('Нет нот для воспроизведения','wr');return;}
-  initAudio(); resetHead();
+/* ==========================================================================
+   PLAYBACK
+   ========================================================================== */
+function startPlayback(){
+  if(!S.notes.length){setStatus('Нет нот для воспроизведения.');return;}
+  initAudio();
+  if(S.t>=S.totalTime){ S.off=0; S.t=0; }
   S.playing=true;S.paused=false;
-  S.t0=performance.now()/1000-S.off/S.rate;
-  S.lastFrame=performance.now()/1000;
-  $('bState').innerHTML='<span class="ld rc" style="display:inline-block;margin-right:5px;vertical-align:middle;"></span>ВОСПРОИЗВЕДЕНИЕ';
-  $('bState').classList.add('lv'); $('led').className='ld rc';
-  $('bPlay').textContent='⏸';
+  S.t0=performance.now()/1000 - S.off/S.speed;
+  updateTransportUI();
+  requestAnimationFrame(loop);
 }
-function pausePB(){
+function pausePlayback(){
   S.playing=false;S.paused=true;S.off=S.t;
-  $('bState').textContent='⏸ ПАУЗА'; $('bState').classList.remove('lv');
-  $('led').className='ld'; $('bPlay').textContent='▶';
-  killAudio();S.active=[null,null,null];updAx();
-}
-function stopPB(){
-  S.playing=false;S.paused=false;S.t=0;S.off=0;resetHead();
-  $('bState').textContent='⏸ ОЖИДАНИЕ'; $('bState').classList.remove('lv');
-  $('led').className='ld'; $('bPlay').textContent='▶';
   killAudio();S.active=[null,null,null];
-  S.simPos=[S.area[0]/2,S.area[1]/2,S.area[2]/2];S.simDir=[1,1,1];
-  updAx();updProg();clearPlayHL();
+  updateTransportUI();updateAxes();drawPianoRoll();
 }
-function clearPlayHL(){document.querySelectorAll('.ni.ply').forEach(e=>e.classList.remove('ply'));}
-
-function tick(){
-  requestAnimationFrame(tick);
-  const now=performance.now()/1000;
-  let dt=cl(now-(S.lastFrame||now),0,.1); S.lastFrame=now;
-  if(S.playing){
-    S.t=(now-S.t0)*S.rate;
-    if(S.t>=S.total+.12){stopPB();toast('Воспроизведение завершено','ok');}
-    else{
-      updActive(S.t); simMove(dt*S.rate);
-      updAx(); updProg(); markPlaying();
-    }
+function stopPlayback(){
+  S.playing=false;S.paused=false;S.t=0;S.off=0;
+  killAudio();S.active=[null,null,null];
+  S.pos=[S.area[0]/2,S.area[1]/2,S.area[2]/2];
+  S.tgt=S.pos.slice();
+  updateTransportUI();updateAxes();updateProg();drawPianoRoll();highlightPlaying();
+}
+function updateTransportUI(){
+  const b=$('btnPlay');
+  b.textContent = S.playing ? '⏸' : '▶';
+  b.title = S.playing ? 'Пауза (Space)' : 'Воспроизвести (Space)';
+  const vs=$('vizState');
+  if(S.playing){ vs.innerHTML='<span class="led rec"></span>ВОСПРОИЗВЕДЕНИЕ'; vs.classList.add('live'); }
+  else if(S.paused){ vs.textContent='⏸ ПАУЗА'; vs.classList.remove('live'); }
+  else { vs.textContent='⏸ ОЖИДАНИЕ'; vs.classList.remove('live'); }
+  const led=$('led');
+  led.classList.toggle('rec',S.playing);
+  led.classList.toggle('off',!S.playing);
+}
+/* -------- ГЛАВНЫЙ ЦИКЛ: playhead перерисовывается КАЖДЫЙ кадр -------- */
+function loop(){
+  if(!S.playing)return;
+  S.t=(performance.now()/1000-S.t0)*S.speed;
+  if(S.t>=S.totalTime+0.15){
+    S.t=S.totalTime;
+    processNotes(S.t); updateAxes(); updateProg(); highlightPlaying(); drawPianoRoll();
+    stopPlayback();
+    return;
   }
-  drawViz(); drawPR();
+  processNotes(S.t);
+  updateAxes(); updateProg(); highlightPlaying();
+  followPlayhead();
+  drawPianoRoll();
+  requestAnimationFrame(loop);
 }
-let lastPlaySet='';
-function markPlaying(){
-  const key=S.active.map(n=>n?n.id:0).join('-');
-  if(key===lastPlaySet)return;
-  lastPlaySet=key;
-  const ids=new Set(S.active.filter(Boolean).map(n=>n.id));
-  document.querySelectorAll('.ni').forEach(el=>el.classList.toggle('ply',ids.has(+el.dataset.id)));
+/* плавная автопрокрутка: playhead удерживается на 25% ширины */
+function followPlayhead(){
+  if(!PR.follow) return;
+  const w=prC.clientWidth; if(!w) return;
+  const x=tToX(S.t);
+  const right=w-48;
+  if(x>right || x<KEYW){
+    const anchor=KEYW+(w-KEYW)*0.25;
+    PR.scrollT=Math.max(0,S.t-(anchor-KEYW)/PR.pxSec);
+  }
 }
-function updAx(){
+function processNotes(t){
+  const i1=upperBoundStart(t);
+  for(let i=0;i<i1;i++){
+    const n=S.notes[i];
+    const e=n.start+n.dur, a=n.axis;
+    if(a<0||a>2) continue;
+    if(t>=n.start&&t<e){
+      if(S.active[a]!==n){
+        S.active[a]=n;
+        noteOn(a, S.audioMode==='motor' ? motorHz(n.midi) : midiToFreq(n.midi));
+        S.tgt[a]=clamp(((n.midi-60)/72 + 0.5) * S.area[a], 0, S.area[a]);
+      }
+    } else if(S.active[a]===n){ S.active[a]=null; noteOff(a); }
+  }
+  for(let i=0;i<3;i++) S.pos[i]+=(S.tgt[i]-S.pos[i])*0.18;
+}
+function computeVisualTargets(t){
+  S.active=[null,null,null];
+  const i1=upperBoundStart(t);
+  for(let i=0;i<i1;i++){
+    const n=S.notes[i];
+    if(t>=n.start&&t<n.start+n.dur&&n.axis>=0&&n.axis<3&&!S.active[n.axis]) S.active[n.axis]=n;
+  }
+  for(let a=0;a<3;a++){
+    const n=S.active[a];
+    if(n) S.tgt[a]=clamp(((n.midi-60)/72 + 0.5) * S.area[a], 0, S.area[a]);
+  }
+}
+function highlightPlaying(){
+  const set=new Set();
+  const i1=upperBoundStart(S.t);
+  for(let i=0;i<i1;i++){
+    const n=S.notes[i];
+    if(S.t>=n.start && S.t<n.start+n.dur) set.add(n.id);
+  }
+  for(const id of lastPlaying) if(!set.has(id)){const el=noteEls.get(id); if(el)el.classList.remove('playing');}
+  for(const id of set) if(!lastPlaying.has(id)){const el=noteEls.get(id); if(el)el.classList.add('playing');}
+  lastPlaying=set;
+}
+function updateAxes(){
   for(let i=0;i<3;i++){
-    const n=S.active[i], card=$('ac'+i);
-    card.classList.toggle('live',!!n);
-    $('an'+i).textContent=n?m2n(n.midi)+' · '+motorHz(n.midi).toFixed(0)+' шаг/с':'свободна';
-    $('ab'+i).style.width=(S.simPos[i]/(S.area[i]||1)*100).toFixed(1)+'%';
-    $('ap'+i).textContent=S.simPos[i].toFixed(1)+' мм';
-    $('ah'+i).textContent=n?motorHz(n.midi).toFixed(0)+' шаг/с':'0 шаг/с';
+    const n=S.active[i];
+    $('axN'+i).textContent = n? (midiToName(n.midi)+' · '+motorHz(n.midi).toFixed(0)+' шаг/с') : '—';
+    $('axB'+i).style.width = clamp(S.pos[i]/S.area[i]*100,0,100).toFixed(1)+'%';
+    $('axP'+i).textContent = S.pos[i].toFixed(1)+' мм';
+    $('axH'+i).textContent = n? motorHz(n.midi).toFixed(0)+' Гц' : '0 Гц';
   }
   const c=S.active.filter(Boolean).length;
-  $('bPoly').textContent='ПОЛИФОНИЯ '+c+'/3';
-  $('bPos').textContent='X'+S.simPos[0].toFixed(1)+' Y'+S.simPos[1].toFixed(1)+' Z'+S.simPos[2].toFixed(1);
-  const w=$('bWarn');
-  if(S.muted>0){w.style.display='';w.textContent='⚠ ПОДАВЛЕНО НОТ: '+S.muted;}
-  else if(S.warnF>0){w.style.display='';w.textContent='⚠ КАДРОВ С ПРЕВЫШЕНИЕМ F: '+S.warnF;}
-  else w.style.display='none';
+  $('vizPoly').textContent='ПОЛИФОНИЯ '+c+'/3';
+  $('vizPos').textContent='X'+S.pos[0].toFixed(1)+' Y'+S.pos[1].toFixed(1)+' Z'+S.pos[2].toFixed(1);
 }
-function updProg(){
-  const p=S.total>0?cl(S.t/S.total,0,1):0;
-  $('pF').style.width=(p*100)+'%';
-  $('pH').style.left=(p*100)+'%';
-  $('tD').innerHTML=fmtT(Math.max(0,S.t))+' <small>/ '+fmtT(S.total)+'</small>';
+function updateProg(){
+  const p=S.totalTime>0?clamp(S.t/S.totalTime,0,1):0;
+  $('progFill').style.width=(p*100)+'%';
+  $('progHead').style.left=(p*100)+'%';
+  $('timeDisp').textContent=fmtT(Math.max(0,S.t))+' / '+fmtT(S.totalTime);
 }
-function seek(t){
-  S.t=cl(t,0,S.total); S.off=S.t;
-  if(S.playing)S.t0=performance.now()/1000-S.t/S.rate;
-  killAudio();S.active=[null,null,null];resetHead();
-  /* пересчитываем симуляцию с нуля для корректной позиции осей */
-  S.simPos=[S.area[0]/2,S.area[1]/2,S.area[2]/2];S.simDir=[1,1,1];
-  const steps=Math.min(4000,Math.ceil(S.t/0.02));
-  const dtp=steps>0?S.t/steps:0;
-  for(let i=0;i<steps;i++){updActive((i+1)*dtp);simMove(dtp);}
-  if(!S.playing){killAudio();S.active=[null,null,null];}
-  updAx();updProg();
+function seekTo(t){
+  t=clamp(t,0,Math.max(0,S.totalTime));
+  S.t=t;S.off=t;
+  if(S.playing) S.t0=performance.now()/1000-t/S.speed;
+  killAudio();
+  computeVisualTargets(t);
+  updateAxes();updateProg();highlightPlaying();drawPianoRoll();
 }
-function scrollToT(t){
-  if(tToX(t)<KEYW+24||tToX(t)>KEYW+contentW()-40)
-    PR.scT=cl(t-viewT()*.3,0,Math.max(0,spanT()-viewT()));
+function scrollTimeTo(t){
+  const w=prC.clientWidth;
+  if(!w) return;
+  if(tToX(t)<KEYW+20||tToX(t)>w-40) PR.scrollT=Math.max(0,t-(w-KEYW)*0.25/PR.pxSec);
+  drawPianoRoll();
 }
 
-/* =====================================================================
-   VISUALIZATION (станок)
-   ===================================================================== */
-const vc=$('vzC'), vx=vc.getContext('2d');
+$('btnPlay').addEventListener('click',()=>{ S.playing?pausePlayback():startPlayback(); });
+$('btnStop').addEventListener('click',stopPlayback);
+$('btnRew').addEventListener('click',stopPlayback);
+$('progBar').addEventListener('click',e=>{
+  if(!S.totalTime)return;
+  const r=e.currentTarget.getBoundingClientRect();
+  if(r.width<=0) return;
+  seekTo(clamp((e.clientX-r.left)/r.width,0,1)*S.totalTime);
+});
+
+/* ==========================================================================
+   VISUALIZATION
+   ========================================================================== */
+const vz=$('vizCanvas'), vx=vz.getContext('2d');
+let idleFrame=0;
 function drawViz(){
-  const {w,h}=syncSize(vc,vx); const c=vx;
+  const {w,h}=fitDPR(vz,vx); const c=vx;
   c.clearRect(0,0,w,h);
-  if(w<60||h<60)return;
 
-  const SW=Math.min(w*.62,h*.66), cxp=w*.44, cyp=h*.52;
-  const dep=SW*.30, ox=cxp-SW/2, oy=cyp-SW*.36+dep*.30, bh=SW*.62;
+  const S2=Math.min(w,h)*0.42, cx=w/2, cy=h/2+6;
+  c.strokeStyle='rgba(42,52,68,0.35)';c.lineWidth=1;
+  const g=34;
+  for(let x=(cx%g);x<w;x+=g){c.beginPath();c.moveTo(x+.5,0);c.lineTo(x+.5,h);c.stroke();}
+  for(let y=(cy%g);y<h;y+=g){c.beginPath();c.moveTo(0,y+.5);c.lineTo(w,y+.5);c.stroke();}
 
-  /* сетка фона */
-  c.strokeStyle='rgba(42,52,68,.28)';c.lineWidth=1;
-  const g=36;
-  for(let x=((cxp%g)+g)%g;x<w;x+=g){c.beginPath();c.moveTo(x+.5,0);c.lineTo(x+.5,h);c.stroke();}
-  for(let y=((cyp%g)+g)%g;y<h;y+=g){c.beginPath();c.moveTo(0,y+.5);c.lineTo(w,y+.5);c.stroke();}
-
-  /* куб рабочей области */
-  c.strokeStyle='rgba(96,116,142,.45)';c.lineWidth=1.2;
-  c.strokeRect(ox,oy,SW,bh);
+  const dep=S2*0.30, ox=cx-S2/2, oy=cy-S2/2+dep*0.35;
+  c.strokeStyle='rgba(90,110,135,0.42)';c.lineWidth=1.2;
+  c.strokeRect(ox,oy,S2,S2*0.72);
   c.beginPath();
-  c.moveTo(ox,oy);c.lineTo(ox+dep,oy-dep*.62);
-  c.lineTo(ox+SW+dep,oy-dep*.62);c.lineTo(ox+SW,oy);
-  c.moveTo(ox+SW,oy);c.lineTo(ox+SW+dep,oy-dep*.62);
-  c.lineTo(ox+SW+dep,oy+bh-dep*.62);c.lineTo(ox+SW,oy+bh);
+  c.moveTo(ox,oy);c.lineTo(ox+dep,oy-dep*0.6);c.lineTo(ox+S2+dep,oy-dep*0.6);c.lineTo(ox+S2,oy);
+  c.moveTo(ox+S2,oy);c.lineTo(ox+S2+dep,oy-dep*0.6);c.lineTo(ox+S2+dep,oy+S2*0.72-dep*0.6);c.lineTo(ox+S2,oy+S2*0.72);
   c.stroke();
-  c.fillStyle='rgba(122,134,148,.5)';c.font='9px JetBrains Mono, monospace';
-  c.fillText('X · '+S.area[0]+' мм',ox+SW/2-24,oy+bh+15);
-  c.save();c.translate(ox-9,oy+bh/2+22);c.rotate(-Math.PI/2);c.fillText('Y · '+S.area[1]+' мм',0,0);c.restore();
-  c.fillText('Z · '+S.area[2]+' мм',ox+SW+dep+7,oy-dep*.32);
+  c.fillStyle='rgba(122,134,148,0.45)';c.font='9px JetBrains Mono, monospace';
+  c.fillText(S.area[0]+' мм',ox+S2/2-14,oy+S2*0.72+16);
+  c.save();c.translate(ox-10,oy+S2*0.36);c.rotate(-Math.PI/2);c.fillText(S.area[1]+' мм',0,0);c.restore();
+  c.fillText(S.area[2]+' мм (Z)',ox+S2+dep+6,oy-dep*0.3);
 
-  /* позиция инструмента */
-  const fx=cl(S.simPos[0]/(S.area[0]||1),0,1), fy=cl(S.simPos[1]/(S.area[1]||1),0,1), fz=cl(S.simPos[2]/(S.area[2]||1),0,1);
-  const tx=ox+SW*fx, ty=oy+bh*(1-fy);
-  c.strokeStyle='rgba(255,107,74,.22)';c.setLineDash([3,4]);c.lineWidth=1;
-  c.beginPath();c.moveTo(tx,oy);c.lineTo(tx,oy+bh);c.stroke();
-  c.strokeStyle='rgba(74,255,139,.22)';
-  c.beginPath();c.moveTo(ox,ty);c.lineTo(ox+SW,ty);c.stroke();
+  const rx=ox+S2*clamp(S.pos[0]/S.area[0],0,1);
+  const ry=oy+S2*0.72*(1-clamp(S.pos[1]/S.area[1],0,1));
+  const rzp=clamp(S.pos[2]/S.area[2],0,1);
+
+  c.setLineDash([3,4]);
+  c.strokeStyle='rgba(255,107,74,0.25)';
+  c.beginPath();c.moveTo(rx,oy);c.lineTo(rx,oy+S2*0.72);c.stroke();
+  c.strokeStyle='rgba(74,255,139,0.25)';
+  c.beginPath();c.moveTo(ox,ry);c.lineTo(ox+S2,ry);c.stroke();
   c.setLineDash([]);
 
-  /* Z-шток */
-  const zx=tx+dep*(.25+fz*.75), zy=ty-dep*.62*(.25+fz*.75);
-  c.strokeStyle='rgba(74,158,255,.85)';c.lineWidth=3;
-  c.beginPath();c.moveTo(tx,ty);c.lineTo(zx,zy-12);c.stroke();
-  c.fillStyle='rgba(74,158,255,.9)';rr(c,zx-7,zy-22,14,12,2);c.fill();
+  const tx=rx, ty=ry;
+  c.strokeStyle='rgba(74,158,255,0.75)';c.lineWidth=3;
+  c.beginPath();c.moveTo(tx,ty);c.lineTo(tx+dep*rzp,ty-dep*0.6*rzp-10);c.stroke();
 
-  /* волны вибрации моторов */
   for(let a=0;a<3;a++){
     const n=S.active[a]; if(!n)continue;
-    const hz=motorHz(n.midi), amp=cl(2.5+hz/110,2.5,14);
-    c.strokeStyle=AXC[a];c.globalAlpha=.5;c.lineWidth=1.5;c.beginPath();
-    for(let i=0;i<=70;i++){
-      const pxx=tx-35+i, pyy=ty+20+a*12+Math.sin(i*hz/300+performance.now()/85)*amp*.45;
-      i?c.lineTo(pxx,pyy):c.moveTo(pxx,pyy);
+    const hz=motorHz(n.midi);
+    const amp=clamp(3+hz/90,3,16);
+    c.strokeStyle=AXC[a];c.globalAlpha=.55;c.lineWidth=1.6;
+    c.beginPath();
+    for(let i=0;i<=64;i++){
+      const px=tx-32+i, py=ty+22+a*13+Math.sin(i*hz/260+performance.now()/90)*amp*0.42;
+      i?c.lineTo(px,py):c.moveTo(px,py);
     }
     c.stroke();c.globalAlpha=1;
   }
 
-  c.fillStyle='#e6ebf2';c.beginPath();c.arc(tx,ty,4.5,0,7);c.fill();
-  c.strokeStyle='rgba(255,159,67,.85)';c.lineWidth=2;
-  c.beginPath();c.arc(tx,ty,9.5+Math.sin(performance.now()/210)*2,0,7);c.stroke();
+  c.fillStyle='#e6ebf2';c.beginPath();c.arc(tx,ty,5,0,Math.PI*2);c.fill();
+  c.strokeStyle='rgba(255,159,67,0.85)';c.lineWidth=2;
+  c.beginPath();c.arc(tx,ty,10+Math.sin(performance.now()/220)*2,0,Math.PI*2);c.stroke();
 
-  /* моторы */
-  const bw=Math.min(146,w*.30), bx=w-bw-14, by=h-104;
-  if(by>50){
-    for(let a=0;a<3;a++){
-      const n=S.active[a], yy=by+a*30;
-      c.fillStyle='rgba(13,20,29,.88)';rr(c,bx-8,yy-12,bw,26,5);c.fill();
-      c.strokeStyle=n?AXC[a]:'rgba(42,52,68,.95)';c.lineWidth=1;rr(c,bx-8,yy-12,bw,26,5);c.stroke();
-      c.fillStyle=AXC[a];c.font='bold 11px JetBrains Mono, monospace';c.fillText(AX[a],bx,yy+4);
-      c.font='9px JetBrains Mono, monospace';
-      c.fillStyle=n?'#e6ebf2':'#3f4d5e';c.fillText(n?m2n(n.midi):'idle',bx+16,yy+1);
-      c.fillStyle='#7a8694';c.fillText(n?motorHz(n.midi).toFixed(0)+' ш/с':'0 ш/с',bx+16,yy+11);
-      c.fillStyle=n?AXC[a]:'#243040';c.beginPath();c.arc(bx+bw-16,yy+1,3.5,0,7);c.fill();
-      if(n){c.globalAlpha=.26;c.beginPath();c.arc(bx+bw-16,yy+1,7+Math.sin(performance.now()/110)*2,0,7);c.fill();c.globalAlpha=1;}
-      c.fillStyle='rgba(122,134,148,.55)';c.fillText(S.simPos[a].toFixed(1)+'мм',bx+bw-58,yy+11);
-    }
+  const bx=w-138, by=h-108;
+  for(let a=0;a<3;a++){
+    const n=S.active[a], yy=by+a*30;
+    c.font='9px JetBrains Mono, monospace';
+    c.fillStyle='rgba(13,20,29,0.85)';rr(c,bx-8,yy-11,132,25,5);c.fill();
+    c.strokeStyle=n?AXC[a]:'rgba(42,52,68,0.9)';c.lineWidth=1;rr(c,bx-8,yy-11,132,25,5);c.stroke();
+    c.fillStyle=AXC[a];c.font='bold 11px JetBrains Mono, monospace';c.fillText(AX[a],bx,yy+4);
+    c.font='9px JetBrains Mono, monospace';
+    c.fillStyle=n?'#e6ebf2':'#4a5a6a';
+    c.fillText(n?midiToName(n.midi):'—',bx+16,yy+1);
+    c.fillStyle='#7a8694';
+    c.fillText(n?motorHz(n.midi).toFixed(0)+' ш/с':'idle',bx+16,yy+11);
+    c.fillStyle=n?AXC[a]:'#243040';
+    c.beginPath();c.arc(bx+114,yy+2,3.5,0,Math.PI*2);c.fill();
+    if(n){c.globalAlpha=.28;c.beginPath();c.arc(bx+114,yy+2,7+Math.sin(performance.now()/120)*2,0,Math.PI*2);c.fill();c.globalAlpha=1;}
   }
+
+  if(!S.playing && (idleFrame++ % 2===0)){
+    let moving=false;
+    for(let i=0;i<3;i++){
+      const d=S.tgt[i]-S.pos[i];
+      if(Math.abs(d)>0.05){ S.pos[i]+=d*0.18; moving=true; } else S.pos[i]=S.tgt[i];
+    }
+    if(moving) updateAxes();
+  }
+  requestAnimationFrame(drawViz);
 }
 
-/* =====================================================================
+/* ==========================================================================
    MIDI IMPORT
-   ===================================================================== */
-const uA=$('upA'), fI=$('fIn');
-uA.addEventListener('click',()=>fI.click());
-uA.addEventListener('dragover',e=>{e.preventDefault();uA.classList.add('dg');});
-uA.addEventListener('dragleave',()=>uA.classList.remove('dg'));
-uA.addEventListener('drop',e=>{e.preventDefault();uA.classList.remove('dg');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
-fI.addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);fI.value='';});
+   ========================================================================== */
+const ua=$('uploadArea'), fi=$('fileInput');
+ua.addEventListener('click',()=>fi.click());
+ua.addEventListener('dragover',e=>{e.preventDefault();ua.classList.add('dragover');});
+ua.addEventListener('dragleave',()=>ua.classList.remove('dragover'));
+ua.addEventListener('drop',e=>{e.preventDefault();ua.classList.remove('dragover');if(e.dataTransfer.files&&e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+fi.addEventListener('change',e=>{if(e.target.files&&e.target.files[0])loadFile(e.target.files[0]); e.target.value='';});
 
 async function loadFile(file){
-  if(!/\.(midi|mid)$/i.test(file.name)){toast('Нужен файл .mid или .midi','er');return;}
+  if(!/\.(midi|mid)$/i.test(file.name)){alert('Нужен файл .mid или .midi');return;}
+  if(typeof Midi==='undefined'){alert('Библиотека @tonejs/midi не загрузилась (нужен интернет). Используйте «Демо».');return;}
   try{
     const buf=await file.arrayBuffer();
-    if(typeof Midi==='undefined'){toast('Библиотека MIDI не загрузилась — нужен интернет','er');return;}
     const midi=new Midi(buf);
-    S.tempo=(midi.header.tempos&&midi.header.tempos.length)?midi.header.tempos[0].bpm:120;
-    if(!isFinite(S.tempo)||S.tempo<=0)S.tempo=120;
+    S.tempo = (midi.header.tempos&&midi.header.tempos.length)? midi.header.tempos[0].bpm : 120;
+    if(!isFinite(S.tempo)||S.tempo<=0) S.tempo=120;
     const list=[];
     midi.tracks.forEach(tr=>tr.notes.forEach(n=>{
-      if(n.midi==null||!isFinite(n.time))return;
-      list.push({id:S.nid++,midi:cl(n.midi|0,0,127),start:Math.max(0,r3(n.time)),
-                 dur:cl(r3(n.duration)||.1,.05,600),axis:0,vel:n.velocity||.8,locked:false,muted:false});
+      if(!isFinite(n.time)) return;
+      list.push({id:S.nextId++,midi:clamp(n.midi|0,0,127),start:r3(Math.max(0,n.time)),
+                 dur:Math.max(0.05,r3(n.duration||0.2)),axis:0,vel:n.velocity||0.8,locked:false});
     }));
-    if(!list.length){toast('В файле нет нот в воспроизводимом диапазоне','wr');return;}
-    S.notes=list; S.fname=file.name; sortNotes(); autoAxesSilent();
-    recomputeTotals(); recompute();
-    $('fInf').style.display='block';
-    $('kName').textContent=file.name; $('kDur').textContent=S.total.toFixed(1)+' с';
-    $('kNotes').textContent=S.notes.length; $('kTrk').textContent=midi.tracks.length;
-    $('kBpm').textContent=S.tempo.toFixed(0)+' BPM';
-    $('bGc').disabled=false;
-    const mx=Math.max(...S.notes.map(n=>n.midi));
-    PR.topP=cl(mx+5,20,128); fitZoom();
-    buildGcode(); renderList(); updStats(); updInsp(); renderTab();
-    status('Загружено «'+file.name+'» — '+S.notes.length+' нот.');
-    toast('MIDI загружен: '+S.notes.length+' нот'+(S.muted?' · подавлено '+S.muted:''),'ok');
-  }catch(err){console.error(err);toast('Ошибка разбора MIDI: '+err.message,'er');}
-}
-function autoAxesSilent(){
-  const ends=[-1,-1,-1]; sortNotes();
-  S.notes.forEach(n=>{
-    let a=-1;
-    for(let i=0;i<3;i++){if(ends[i]<=n.start+1e-6){a=i;break;}}
-    if(a<0)a=ends.indexOf(Math.min(...ends));
-    else{const pc=n.midi%3;if(ends[pc]<=n.start+1e-6)a=pc;}
-    n.axis=a;n.locked=true;ends[a]=Math.max(ends[a],n.start+n.dur);
-  });
+    list.sort((a,b)=>a.start-b.start||a.midi-b.midi);
+    if(!list.length){ alert('В файле нет нот.'); return; }
+    stopPlayback();
+    S.notes=list; S.fileName=file.name;
+    autoAssignAxes();
+    recomputeTotals();
+    $('fileInfo').style.display='block';
+    $('fName').textContent=file.name;
+    $('fDur').textContent=S.totalTime.toFixed(1)+' с';
+    $('fNotes').textContent=S.notes.length;
+    $('fTracks').textContent=midi.tracks.length;
+    $('fTempo').textContent=Math.round(S.tempo)+' BPM';
+    PR.topPitch=clamp(maxMidi()+4,20,127);
+    fitZoom();
+    onEdit(false);
+    setStatus('Загружено «'+file.name+'» — '+S.notes.length+' нот. Оси распределены.');
+  }catch(err){console.error(err);alert('Ошибка разбора MIDI: '+(err&&err.message?err.message:err));}
 }
 function fitZoom(){
-  const cw=contentW();
-  if(S.total>0)PR.pxSec=cl(cw/Math.max(S.total*1.05,1),3,1200);
-  PR.scT=0;clampScroll();
-}
-function fitNotes(){
-  if(!S.notes.length){toast('Нет нот','wr');return;}
-  const a=S.notes.map(n=>n.midi);
-  const lo=Math.min(...a),hi=Math.max(...a);
-  PR.pxKey=cl(contentH()/(hi-lo+4),4,60);
-  PR.topP=cl(hi+2,Math.min(visKeys(),128),128);
-  fitZoom();
+  const w=prC.clientWidth-KEYW-24;
+  if(w>0 && S.totalTime>0) PR.pxSec=clamp(w/S.totalTime,4,400);
+  PR.scrollT=0;
+  const hh=prC.clientHeight-RULER-12;
+  if(S.notes.length && hh>0){
+    const hi=maxMidi(), lo=minMidi();
+    PR.pxKey=clamp(hh/Math.max(12,hi-lo+6),5,26);
+    PR.topPitch=clamp(hi+3,20,127);
+  }
+  drawPianoRoll();
 }
 
 /* ---------------- ДЕМО ---------------- */
-$('bDemo').addEventListener('click',()=>{
-  S.tempo=112; const bs=60/S.tempo;
+$('btnDemo').addEventListener('click',()=>{
+  stopPlayback();
+  S.tempo=110;
+  const bs=60/S.tempo;
   const mel=[
     [60,0,1],[60,1,1],[67,2,1],[67,3,1],[69,4,1],[69,5,1],[67,6,2],
     [65,8,1],[65,9,1],[64,10,1],[64,11,1],[62,12,1],[62,13,1],[60,14,2],
@@ -1655,220 +1868,242 @@ $('bDemo').addEventListener('click',()=>{
     [67,24,1],[67,25,1],[65,26,1],[65,27,1],[64,28,1],[64,29,1],[62,30,2],
     [60,32,1],[60,33,1],[67,34,1],[67,35,1],[69,36,1],[69,37,1],[67,38,2],
     [65,40,1],[65,41,1],[64,42,1],[64,43,1],[62,44,1],[62,45,1],[60,46,2],
-    [72,32,1],[76,34,1],[79,36,1],[76,38,1],[72,40,1],[74,42,1],[76,44,2],
     [48,0,2],[43,2,2],[45,4,2],[48,6,2],[41,8,2],[45,10,2],[43,12,2],[48,14,2],
     [55,16,2],[53,18,2],[50,20,2],[55,22,2],[52,24,2],[55,26,2],[50,28,2],[55,30,2],
     [48,32,2],[43,34,2],[45,36,2],[48,38,2],[41,40,2],[45,42,2],[43,44,2],[48,46,2]
   ];
-  S.notes=mel.map(([m,b,l])=>({id:S.nid++,midi:m,start:r3(b*bs),dur:r3(l*bs*.9),axis:0,vel:.8,locked:false,muted:false}));
-  S.fname='Демо — 4 голоса';
-  sortNotes(); autoAxesSilent(); recomputeTotals(); recompute();
-  $('fInf').style.display='block';
-  $('kName').textContent=S.fname;$('kDur').textContent=S.total.toFixed(1)+' с';
-  $('kNotes').textContent=S.notes.length;$('kTrk').textContent='1';$('kBpm').textContent=S.tempo+' BPM';
-  $('bGc').disabled=false;
-  PR.topP=84; fitZoom();
-  buildGcode();renderList();updStats();updInsp();renderTab();
-  status('Загружена демо-мелодия (4 голоса → 3 оси). Нажмите ▶');
-  toast('Демо-мелодия загружена: '+S.notes.length+' нот'+(S.muted?' · подавлено '+S.muted:''),'ok');
+  S.notes=mel.map(([m,b,l])=>({id:S.nextId++,midi:m,start:r3(b*bs),dur:r3(l*bs*0.92),axis:0,vel:.8,locked:false}));
+  S.fileName='Демо — Twinkle Twinkle (+бас)';
+  autoAssignAxes();
+  recomputeTotals();
+  $('fileInfo').style.display='block';
+  $('fName').textContent=S.fileName;
+  $('fDur').textContent=S.totalTime.toFixed(1)+' с';
+  $('fNotes').textContent=S.notes.length;
+  $('fTracks').textContent='1';
+  $('fTempo').textContent=Math.round(S.tempo)+' BPM';
+  PR.topPitch=76; PR.pxKey=13; fitZoom(); onEdit(false);
+  setStatus('Загружена демо-мелодия (2 голоса, 3 оси). Нажмите ▶ для прослушивания.');
 });
 
-/* =====================================================================
+/* ==========================================================================
    UI BINDINGS
-   ===================================================================== */
-/* сворачивание секций */
-document.querySelectorAll('.sec-h').forEach(h=>h.addEventListener('click',e=>{
-  if(e.target.closest('.sec-t'))return;
-  h.parentElement.classList.toggle('cl');
-}));
-
-/* инструменты */
-const toolNames={draw:'✏️ Рисовать',select:'👆 Выбор',erase:'🧹 Стереть'};
+   ========================================================================== */
 document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('[data-tool]').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');PR.tool=b.dataset.tool;
-  cv.style.cursor=PR.tool==='draw'?'crosshair':'default';
-  $('sTool').textContent=toolNames[PR.tool]||'';
+  prC.style.cursor = PR.tool==='draw' ? 'crosshair' : PR.tool==='rect' ? 'cell' : 'default';
 }));
-document.querySelectorAll('[data-br]').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('[data-br]').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');PR.brush=+b.dataset.br;
+document.querySelectorAll('[data-brush]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-brush]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');PR.brush=+b.dataset.brush;
 }));
-$('sL').addEventListener('change',e=>PR.lenB=+e.target.value||.5);
-$('sS').addEventListener('change',e=>PR.snapB=+e.target.value);
-$('zI').addEventListener('click',()=>{PR.pxSec*=1.35;clampScroll();});
-$('zO').addEventListener('click',()=>{PR.pxSec/=1.35;clampScroll();});
-$('zF').addEventListener('click',fitZoom);
-$('zS').addEventListener('click',fitNotes);
+$('selLen').addEventListener('change',e=>PR.lenBeats=+e.target.value||0.5);
+$('selSnap').addEventListener('change',e=>PR.snapBeats=+e.target.value||0);
+$('zIn').addEventListener('click',()=>{PR.pxSec=clamp(PR.pxSec*1.35,4,900);drawPianoRoll();});
+$('zOut').addEventListener('click',()=>{PR.pxSec=clamp(PR.pxSec/1.35,4,900);drawPianoRoll();});
+$('zFit').addEventListener('click',fitZoom);
+$('btnFollow').addEventListener('click',()=>{
+  PR.follow=!PR.follow;
+  $('btnFollow').classList.toggle('on',PR.follow);
+  setStatus(PR.follow?'Автопрокрутка за playhead включена.':'Автопрокрутка выключена.');
+});
+
+/* скрытие панелей — больше места на небольшом экране */
+$('btnTogLeft').addEventListener('click',()=>{
+  document.body.classList.toggle('hide-left');
+  $('btnTogLeft').classList.toggle('active',document.body.classList.contains('hide-left'));
+  setTimeout(()=>{drawPianoRoll();},30);
+});
+$('btnTogRight').addEventListener('click',()=>{
+  document.body.classList.toggle('hide-right');
+  $('btnTogRight').classList.toggle('active',document.body.classList.contains('hide-right'));
+  setTimeout(()=>{drawPianoRoll();},30);
+});
+
+/* ресайзер нижней панели */
+(function(){
+  const split=$('rowSplit');
+  let dragging=false, startY=0, startH=0;
+  const curH=()=>$('bottomPanel').getBoundingClientRect().height;
+  split.addEventListener('mousedown',e=>{
+    dragging=true;startY=e.clientY;startH=curH();
+    split.classList.add('act');document.body.style.userSelect='none';e.preventDefault();
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    const shellH=document.querySelector('.shell').clientHeight;
+    const nh=clamp(startH+(startY-e.clientY),130,Math.max(150,shellH-200));
+    document.documentElement.style.setProperty('--bh',nh.toFixed(0)+'px');
+    drawPianoRoll();
+  });
+  window.addEventListener('mouseup',()=>{
+    if(!dragging)return;
+    dragging=false;split.classList.remove('act');document.body.style.userSelect='';drawPianoRoll();
+  });
+  split.addEventListener('dblclick',()=>{
+    document.documentElement.style.removeProperty('--bh');drawPianoRoll();
+  });
+})();
 
 /* C4 */
+const c4R=$('c4Range'), c4I=$('c4Input'), c4D=$('c4Disp');
 function setC4(v,src){
-  const n=parseFloat(v);
-  S.c4=isFinite(n)?cl(n,10,40000):261.63;
-  if(src!=='r')$('c4R').value=Math.round(cl(S.c4,40,2500));
-  if(src!=='i')$('c4I').value=S.c4.toFixed(2);
-  $('c4D').textContent=S.c4.toFixed(2);
-  renderTab();
-  if(S.notes.length){buildGcode();renderList();updInsp();updAx();}
+  S.c4Speed=clamp(parseFloat(v)||261.63,20,20000);
+  if(src!=='r')c4R.value=Math.round(clamp(S.c4Speed,50,2000));
+  if(src!=='i')c4I.value=S.c4Speed.toFixed(2);
+  c4D.textContent=S.c4Speed.toFixed(1);
+  renderSpeedTable(); buildGcode(); renderNoteList(); updateInspector();
 }
-$('c4R').addEventListener('input',e=>setC4(e.target.value,'r'));
-$('c4I').addEventListener('change',e=>setC4(e.target.value,'i'));
+c4R.addEventListener('input',e=>setC4(e.target.value,'r'));
+c4I.addEventListener('change',e=>setC4(e.target.value,'i'));
 document.querySelectorAll('[data-c4]').forEach(b=>b.addEventListener('click',()=>setC4(b.dataset.c4)));
 
 /* механика */
 function readMech(){
-  S.spmm=cl(parseInt($('mSpmm').value,10)||80,1,5000);
-  S.area=[cl(parseInt($('mAx').value,10)||200,1,5000),
-          cl(parseInt($('mAy').value,10)||200,1,5000),
-          cl(parseInt($('mAz').value,10)||200,1,5000)];
-  S.maxFeed=cl(parseInt($('mMf').value,10)||6000,10,200000);
-  S.minMove=cl(parseFloat($('mMm').value)||.05,.001,20);
-  S.simPos=[cl(S.simPos[0],0,S.area[0]),cl(S.simPos[1],0,S.area[1]),cl(S.simPos[2],0,S.area[2])];
-  buildGcode();renderTab();updInsp();updAx();
-  toast('Параметры станка обновлены, G-code пересчитан','ok');
+  S.spmm=clamp(+$('spmm').value||80,1,5000);
+  S.area=[clamp(+$('arX').value||200,1,5000),
+          clamp(+$('arY').value||200,1,5000),
+          clamp(+$('arZ').value||200,1,5000)];
+  S.maxFeed=clamp(+$('maxFeed').value||6000,10,100000);
+  S.minMove=clamp(+$('minMove').value||0.05,0.001,10);
+  for(let i=0;i<3;i++){ S.pos[i]=clamp(S.pos[i],0,S.area[i]); S.tgt[i]=clamp(S.tgt[i],0,S.area[i]); }
+  buildGcode();renderSpeedTable();updateInspector();updateAxes();
 }
-['mSpmm','mAx','mAy','mAz','mMf','mMm'].forEach(id=>$(id).addEventListener('change',readMech));
+['spmm','arX','arY','arZ','maxFeed','minMove'].forEach(id=>$(id).addEventListener('change',readMech));
 
 /* звук */
-document.querySelectorAll('[data-w]').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('[data-w]').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');S.wave=b.dataset.w;
-  S.osc.forEach(o=>{if(o)try{o.type=S.wave;}catch(e){}});
+document.querySelectorAll('[data-wave]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-wave]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');S.wave=b.dataset.wave;
+  S.osc.forEach(o=>{if(o)o.type=S.wave;});
 }));
-$('vR').addEventListener('input',e=>{S.vol=e.target.value/100;$('vV').textContent=e.target.value+'%';$('mV').value=e.target.value;});
-$('mV').addEventListener('input',e=>{S.vol=e.target.value/100;$('vV').textContent=e.target.value+'%';$('vR').value=e.target.value;});
-$('aNote').addEventListener('click',()=>{S.amode='note';$('aNote').classList.add('on');$('aMot').classList.remove('on');});
-$('aMot').addEventListener('click',()=>{S.amode='motor';$('aMot').classList.add('on');$('aNote').classList.remove('on');});
-
-/* транспорт */
-$('bPlay').addEventListener('click',()=>{S.playing?pausePB():startPB();});
-$('bStop').addEventListener('click',stopPB);
-$('bRew').addEventListener('click',()=>stopPB());
-$('spdS').addEventListener('change',e=>{
-  S.rate=parseFloat(e.target.value)||1;
-  if(S.playing)S.t0=performance.now()/1000-S.t/S.rate;
-});
-$('pB').addEventListener('click',e=>{
-  if(!S.total)return;
-  const r=e.currentTarget.getBoundingClientRect();
-  seek(cl((e.clientX-r.left)/r.width,0,1)*S.total);
-});
-let pgDrag=false;
-$('pB').addEventListener('pointerdown',e=>{pgDrag=true;$('pB').setPointerCapture(e.pointerId);});
-$('pB').addEventListener('pointermove',e=>{
-  if(!pgDrag||!S.total)return;
-  const r=e.currentTarget.getBoundingClientRect();
-  seek(cl((e.clientX-r.left)/r.width,0,1)*S.total);
-});
-$('pB').addEventListener('pointerup',()=>pgDrag=false);
+function setVolume(pct,from){
+  pct=clamp(+pct||0,0,100);
+  S.volume=pct/100;
+  $('volVal').textContent=Math.round(pct)+'%';
+  if(from!=='m') $('mVol').value=pct;
+  if(from!=='l') $('volRange').value=pct;
+  applyVolumeLive();
+}
+$('volRange').addEventListener('input',e=>setVolume(e.target.value,'l'));
+$('mVol').addEventListener('input',e=>setVolume(e.target.value,'m'));
+$('audNote').addEventListener('click',()=>{S.audioMode='note';$('audNote').classList.add('on');$('audMotor').classList.remove('on');});
+$('audMotor').addEventListener('click',()=>{S.audioMode='motor';$('audMotor').classList.add('on');$('audNote').classList.remove('on');});
 
 /* шапка */
-$('bAxis').addEventListener('click',autoAxes);
-$('bFit').addEventListener('click',()=>{fitNotes();toast('Показаны все ноты','');});
-$('bClr').addEventListener('click',clearAll);
-$('bCsv').addEventListener('click',()=>{if(!S.notes.length){toast('Нет нот','wr');return;}buildCsv();openModal('n');});
-$('bGc').addEventListener('click',()=>{buildGcode();openModal('g');});
-$('bGc2').addEventListener('click',()=>{buildGcode();openModal('g');});
-$('bCmnt').addEventListener('click',()=>{
-  S.gcodeComments = !S.gcodeComments;
-  $('bCmnt').classList.toggle('on', S.gcodeComments);
-  buildGcode();
-  toast('Комментарии в G-code ' + (S.gcodeComments?'включены':'отключены'),'ok');
+$('btnAutoAxis').addEventListener('click',()=>{
+  if(!S.notes.length){setStatus('Нет нот для распределения.');return;}
+  autoAssignAxes();
 });
-$('bHelp').addEventListener('click',()=>$('hp').classList.add('on'));
-$('hpX').addEventListener('click',()=>$('hp').classList.remove('on'));
-$('hpOk').addEventListener('click',()=>$('hp').classList.remove('on'));
-$('hp').addEventListener('click',e=>{if(e.target.id==='hp')$('hp').classList.remove('on');});
+$('btnClear').addEventListener('click',clearAll);
+$('btnCsv').addEventListener('click',()=>{
+  if(!S.notes.length){setStatus('Нет нот.');return;}
+  buildCsv(); buildTable(); openModal('n');
+});
 
 /* клавиатура */
 document.addEventListener('keydown',e=>{
-  const tg=e.target.tagName;
-  if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA'){
-    if(e.key==='Escape')e.target.blur();
-    return;
-  }
-  if(e.code==='Space'){e.preventDefault();S.playing?pausePB():startPB();return;}
-  if(e.key==='Escape'){stopPB();closeModal();$('hp').classList.remove('on');return;}
-  if(e.key==='Home'){e.preventDefault();seek(0);return;}
-  const n=S.notes.find(x=>x.id===PR.sel);
-  if((e.code==='Delete'||e.code==='Backspace')&&PR.sel){e.preventDefault();delNote(PR.sel);return;}
-  const kk=e.key.toLowerCase();
-  if(kk==='b'||kk==='и'){document.querySelector('[data-tool="draw"]').click();return;}
-  if(kk==='v'||kk==='м'){document.querySelector('[data-tool="select"]').click();return;}
-  if(kk==='e'||kk==='у'){document.querySelector('[data-tool="erase"]').click();return;}
-  if(kk==='d'||kk==='в'){if(n){e.preventDefault();dupSel();}return;}
-  if(n){
-    const stp=PR.snapB>0?PR.snapB*beatS():.05;
-    if(e.code==='ArrowLeft'){e.preventDefault();n.start=Math.max(0,r3(n.start-stp));sortNotes();onEdit(false);}
-    else if(e.code==='ArrowRight'){e.preventDefault();n.start=r3(n.start+stp);sortNotes();onEdit(false);}
-    else if(e.code==='ArrowUp'){e.preventDefault();n.midi=cl(n.midi+(e.shiftKey?12:1),0,127);onEdit(false);}
-    else if(e.code==='ArrowDown'){e.preventDefault();n.midi=cl(n.midi-(e.shiftKey?12:1),0,127);onEdit(false);}
+  const tag=e.target.tagName;
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+  if(e.code==='Space'){e.preventDefault();S.playing?pausePlayback():startPlayback();return;}
+  if(e.code==='Escape'){ if($('modal').classList.contains('on')){closeModal();return;} stopPlayback(); return; }
+  if((e.code==='Delete'||e.code==='Backspace')&&PR.sel!==null){e.preventDefault();deleteNote(PR.sel);return;}
+  const k=e.key.toLowerCase();
+  if(k==='b'||k==='и'){document.querySelector('[data-tool="draw"]').click();return;}
+  if(k==='v'||k==='м'){document.querySelector('[data-tool="select"]').click();return;}
+  if(k==='e'||k==='у'){document.querySelector('[data-tool="erase"]').click();return;}
+  if(k==='r'||k==='к'){document.querySelector('[data-tool="rect"]').click();return;}
+  if((k==='d'||k==='в')&&PR.sel!==null&&!e.ctrlKey&&!e.metaKey){e.preventDefault();duplicateSel();return;}
+  if(k==='f'){ $('btnFollow').click(); return; }
+  if(e.code==='Home'){ e.preventDefault(); stopPlayback(); return; }
+  if(PR.sel!==null){
+    const n=S.notes.find(x=>x.id===PR.sel);
+    if(n){
+      const st=PR.snapBeats>0?PR.snapBeats*beatSec():0.05;
+      if(e.code==='ArrowLeft'){e.preventDefault();n.start=Math.max(0,r3(n.start-st));onEdit(false);}
+      else if(e.code==='ArrowRight'){e.preventDefault();n.start=r3(n.start+st);onEdit(false);}
+      else if(e.code==='ArrowUp'){e.preventDefault();n.midi=clamp(n.midi+(e.shiftKey?12:1),0,127);onEdit(false);}
+      else if(e.code==='ArrowDown'){e.preventDefault();n.midi=clamp(n.midi-(e.shiftKey?12:1),0,127);onEdit(false);}
+    }
   }
 });
 
-/* =====================================================================
-   MODAL EXPORT
-   ===================================================================== */
-let moTab='g';
-function openModal(tab){
-  moTab=tab||'g';
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===moTab));
-  const b=$('moB');
-  if(moTab==='g'){b.innerHTML=hlG(S.gTxt||'; пусто');$('moT').textContent='📤 G-code для ЧПУ';}
-  else if(moTab==='t'){b.innerHTML='<span class="c">'+esc(S.tTxt||'')+'</span>';$('moT').textContent='📊 Таблица скоростей моторов';}
-  else{b.innerHTML='<span class="o">'+esc(S.cTxt||'')+'</span>';$('moT').textContent='🎵 Карта нот (CSV)';}
-  $('mo').classList.add('on');
+/* ==========================================================================
+   MODAL
+   ========================================================================== */
+let modalTab='g';
+function paintModal(){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===modalTab));
+  const b=$('modalBody');
+  if(modalTab==='g') b.innerHTML=hl(S.gcodeText||'; пусто');
+  else if(modalTab==='t') b.innerHTML='<span class="c">'+esc(S.tableText||'—')+'</span>';
+  else b.innerHTML='<span class="co">'+esc(S.csvText||'—')+'</span>';
+  $('asciiRow').style.display = modalTab==='g' ? 'flex' : 'none';
 }
-function closeModal(){$('mo').classList.remove('on');}
-$('moX').addEventListener('click',closeModal);
-$('mo').addEventListener('click',e=>{if(e.target.id==='mo')closeModal();});
+function openModal(tab){
+  modalTab=tab||'g';
+  if(modalTab==='g') buildGcode();
+  if(modalTab==='n') buildCsv();
+  if(modalTab==='t') buildTable();
+  paintModal();
+  $('modal').classList.add('on');
+}
+function closeModal(){$('modal').classList.remove('on');}
+$('btnGcode').addEventListener('click',()=>openModal('g'));
+$('modalX').addEventListener('click',closeModal);
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>openModal(t.dataset.tab)));
-$('moC').addEventListener('click',()=>{
-  const tx=moTab==='g'?S.gTxt:moTab==='t'?S.tTxt:S.cTxt;
-  if(!tx){toast('Нет данных для копирования','wr');return;}
-  navigator.clipboard.writeText(tx).then(()=>{
-    const b=$('moC'),o=b.textContent;b.textContent='✓ Скопировано';setTimeout(()=>b.textContent=o,1500);
-    toast('Скопировано в буфер обмена','ok');
-  }).catch(()=>toast('Не удалось скопировать','er'));
+$('optAscii').addEventListener('change',()=>{
+  S.gcode = asciiWanted() ? S.gcodeRaw.map(toAscii) : S.gcodeRaw.slice();
+  S.gcodeText = S.gcode.join('\n');
+  updateGcodePreview();
+  if(modalTab==='g') paintModal();
 });
-$('moD').addEventListener('click',()=>{
-  const mp={g:[S.gTxt,'cnc_music.gcode','text/plain'],t:[S.tTxt,'cnc_speed_table.txt','text/plain'],n:[S.cTxt,'cnc_notes.csv','text/csv;charset=utf-8']};
-  const [tx,nm,tp]=mp[moTab];
-  if(!tx){toast('Нет данных для сохранения','wr');return;}
+$('btnCopy').addEventListener('click',()=>{
+  const txt = modalTab==='g'?S.gcodeText : modalTab==='t'?S.tableText : S.csvText;
+  const done=()=>{ const b=$('btnCopy');const o=b.textContent;b.textContent='✓ Скопировано';setTimeout(()=>b.textContent=o,1500); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt||'').then(done).catch(()=>fallbackCopy(txt,done));
+  } else fallbackCopy(txt,done);
+});
+function fallbackCopy(txt,done){
+  const ta=document.createElement('textarea');
+  ta.value=txt||'';ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');done();}catch(e){alert('Не удалось скопировать.');}
+  document.body.removeChild(ta);
+}
+$('btnDl').addEventListener('click',()=>{
+  const map={g:[S.gcodeText,'cnc_music.gcode','text/plain'],
+             t:[S.tableText,'cnc_speed_table.txt','text/plain'],
+             n:[S.csvText,'cnc_notes.csv','text/csv;charset=utf-8']};
+  const [txt,name,type]=map[modalTab]||map.g;
   const a=document.createElement('a');
-  const u=URL.createObjectURL(new Blob([tx],{type:tp}));
-  a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(u),2000);
-  toast('Файл '+nm+' сохранён','ok');
+  const url=URL.createObjectURL(new Blob([txt||''],{type}));
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
 });
 
-/* =====================================================================
-   SPLITTER (изменение высоты редактора)
-   ===================================================================== */
-(function(){
-  const sp=$('spl'); let dr=false, sy=0, sh=0;
-  sp.addEventListener('pointerdown',e=>{
-    dr=true;sy=e.clientY;sh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--edH'))||300;
-    sp.classList.add('act');sp.setPointerCapture(e.pointerId);document.body.style.userSelect='none';
-  });
-  sp.addEventListener('pointermove',e=>{
-    if(!dr)return;
-    const v=cl(sh+(sy-e.clientY),140,Math.max(160,window.innerHeight-260));
-    document.documentElement.style.setProperty('--edH',v+'px');
-  });
-  const end=()=>{if(!dr)return;dr=false;sp.classList.remove('act');document.body.style.userSelect='';clampScroll();};
-  sp.addEventListener('pointerup',end); sp.addEventListener('pointercancel',end);
-})();
+/* ==========================================================================
+   STATUS / INIT
+   ========================================================================== */
+function setStatus(msg){ $('stLeft').textContent=msg; }
 
-/* =====================================================================
-   INIT
-   ===================================================================== */
-window.addEventListener('resize',()=>{clampScroll();});
-renderTab(); buildGcode(); updStats(); updInsp(); renderList(); clampScroll();
-S.simPos=[S.area[0]/2,S.area[1]/2,S.area[2]/2];
-updAx(); updProg(); requestAnimationFrame(tick);
-setTimeout(()=>{fitZoom();},200);
-status('Готов. Загрузите MIDI файл или нажмите «Демо».');
+let resizeRaf=null;
+window.addEventListener('resize',()=>{
+  if(resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf=requestAnimationFrame(()=>{ resizeRaf=null; drawPianoRoll(); });
+});
+
+renderSpeedTable();
+recomputeTotals();
+S.pos=[S.area[0]/2,S.area[1]/2,S.area[2]/2]; S.tgt=S.pos.slice();
+buildGcode();
+updateStats(); updateInspector(); renderNoteList(); updateTransportUI(); updateProg();
+drawPianoRoll(); drawViz(); updateAxes();
+setTimeout(()=>{drawPianoRoll();},150);
+window.addEventListener('load',()=>{drawPianoRoll();});
 </script>
 </body>
 </html>
